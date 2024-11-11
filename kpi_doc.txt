@@ -1,0 +1,99 @@
+﻿Knowledge Base 
+and 
+Taxonomy/Ontology
+Group B - Topic 1
+Simone Marzeddu (R), Giacomo Aru (A) - 12/11/2024
+Introduction
+This document provides the description and analysis of the KPI Taxonomy and Machine Ontology identified by Group B during the Smart Application Master Course, edition 2024-2025, University of Pisa. 
+
+
+The knowledge base structure described in the following chapters has been designed to offer modularity, extensibility and flexibility in our system. This allows for the inclusion of machine attributes or KPIs that may not be found in the dataset under consideration. With this in mind, this design aims to permit the addition of any other relevant KPIs that may become relevant if the system is used in real contexts that are similar to those studied in the academic environment.
+
+
+KPIs Ontology
+The taxonomy of KPIs that we have identified comprises six principal classes of KPIs. Four of these (Machine Usage KPIs, Energy KPIs, Production KPIs, Financial KPIs) will be directly calculable from the dataset that has been provided for the project, while the remaining two (Workforce KPIs and Legal KPIs) will still be taken into account for theoretical completeness and extendibility of our system, despite the fact that they will not be supported by real instantiation in the final product at the end of the course.
+
+
+This section analyses each of the six classes in detail, highlighting the ramifications of the sub-classes we have identified and giving some examples of KPIs that would be part of these categories.
+________________
+  
+
+Machine Usage KPIs
+Machine Usage KPIs are metrics used to monitor and evaluate the effectiveness, efficiency, and productivity of machinery in a production or manufacturing environment. These KPIs help organizations understand how well their machines are performing and identify areas for improvement to reduce downtime, optimize usage, and enhance overall productivity. 
+In our ontology, this class of KPIs branches into two subclasses: Utilization KPIs (e.g. working_time, idle_time, offline_time, utilization_rate, availability, …) and Downtime KPIs (e.g. total_downtime, mean_time_between_failure, …).
+
+
+Energy KPIs
+Energy KPIs are metrics used to assess and optimize an organization’s energy consumption, efficiency, and sustainability. These indicators help companies monitor their energy usage, identify areas to reduce waste, lower costs, and minimize their environmental impact.
+In our ontology, this class of KPIs branches into three subclasses: Consumption KPIs (e.g. consumption, power, consumption_working, consumption_idle, …), Efficiency KPIs (e.g. energy_efficiency_ratio, energy_consumption_per_unit, …) and Sustainability KPIs (e.g. carabon_footprint, renewable_energy_usage_percentage, …).
+
+
+Production KPIs
+Production KPIs (Key Performance Indicators) are metrics used to monitor, assess, and improve the efficiency, quality, and overall effectiveness of production processes within manufacturing or production facilities. These KPIs enable companies to track performance, identify bottlenecks, and drive productivity improvements.
+In our ontology, this class of KPIs branches into two subclasses: Cycles KPIs (e.g. cycles_count, average_cycle_time, …), Efficiency KPIs (e.g. good_cycles_count, bad_cycles_count, overall_equipment_effectiveness, defect_density, failure_rate, success_rate…).
+
+
+Financial KPIs
+Financial KPIs are metrics used to evaluate an organization’s financial performance, stability, and overall economic health. These KPIs help companies track profitability, manage expenses, optimize cash flow, and assess return on investment. 
+In our ontology, this class of KPIs branches into three subclasses: Cost KPIs (e.g. energy_cost, cost_per_unit, cost_per_cycle, total_energy_cost, total_operational_cost …), ProfitabilityKPIs (e.g. gross_margin_percentage, return_on_investment, …) and Revenue KPIs (e.g. revenue_per_employee, sales_growth_rate, …).
+
+
+Workforce KPIs
+Workforce KPIs are metrics used to evaluate employee performance, productivity, engagement, and overall workforce effectiveness. These KPIs help organizations manage their talent more effectively, optimize workforce performance, and improve employee satisfaction. (e.g. turnover_rate, absenteism_rate, employee_satisfaction_score, training_hours_per_employee …)
+Since this class is meant to represent a theoretical expansion of our ontology, this will not branch into more specific subclasses.
+
+
+Legal KPIs
+Legal KPIs are metrics used to evaluate the effectiveness, efficiency, and risk management of an organization’s legal function. These KPIs help legal departments measure their performance, manage compliance, mitigate risks, and align their work with business objectives. (e.g. compliance_rate, incident_rate, contract_compliance_rates, litigation_costs…)
+Since this class is meant to represent a theoretical expansion of our ontology, this will not branch into more specific subclasses.
+
+
+Machines Ontology
+As previously stated, our ontology also encompasses machine-related data and hierarchies. This section presents the six classes identified based exclusively on the specific case of the dataset provided for the project (Metal Cutting Machine, Laser Cutting Machine, Laser Welding Machine, Assembly Machine, Testing Machine and Riveting Machine).
+Metal Cutting Machine
+Metal-cutting machines are employed to shape material from metal workpieces through a variety of cutting techniques, including milling, turning, drilling, and grinding. Such machinery frequently employs cutting tools crafted from hard materials, thereby ensuring precision and accuracy. These tools are used to create specific shapes, dimensions, or finishes for manufacturing parts.
+Laser Cutting Machine
+Laser cutting machines employ high-powered lasers to cut materials, typically metals, by focusing a laser beam that melts, burns, or vaporises the material along a defined path. These machines are renowned for their precision, speed and capacity to cut complex shapes, and are utilised in industries that require intricate cutting, including automotive, aerospace and electronics.
+Laser Welding Machine
+Laser welding machines employ focused laser beams to fuse materials together, typically metals or thermoplastics, at high speeds and with precise control. The process results in the formation of robust and precise welds, rendering it particularly advantageous in applications where minimal thermal distortion is desired, including those in the automotive, medical device, and high-tech industries.
+Assembly Machine
+An assembly machine is an automated system designed to combine different components into finished products or sub-assemblies. Such machinery facilitates the streamlining of production processes by performing repetitive tasks, including the insertion, fastening, and joining of components, thereby enhancing consistency and reducing the necessity for manual labour. Such machinery is frequently utilised in the production of electronic devices, automotive components and consumer goods.
+Testing Machine
+Testing machines are employed for the assessment of the quality, durability, and performance of materials or finished products. Such apparatus can be utilised to conduct a plethora of tests, including tensile, fatigue, and pressure testing, with the objective of ensuring that products comply with the requisite industry standards and specifications. Testing machines are indispensable in industrial sectors such as manufacturing, construction and quality assurance.
+Riveting Machine
+Riveting machines are designed for the purpose of joining materials, typically metals, through the insertion and deformation of rivets, thereby creating secure and permanent joints. These machines apply a force to the rivets, causing them to expand and thereby hold the components together. They are commonly used in industries such as aerospace, automotive, and metalworking, where strong and stable joints are required.
+
+
+Entities and Attributes
+The two fundamental classes within the ontology describe two entity types: KPI and Machine. The two macro-classes will be employed to define instances pertaining to particular machines (instances of the Machine class) and “Instantiated KPIs” (instances of the KPI class, characterised by defined relations to specific machines instances). Follows a list of the attributes identified for the two classes of entities:
+KPIs: 
+Datatype Properties:
+* ID: unique identifier of the instantiated KPI
+* Name: common name of the KPI (human readable)
+* Description: a textual description of the KPI (human readable)
+* Confidential: whether the KPIs is confidential or not
+* Calculation Formula: descriptive textual informations about the formula to compute the KPI value
+* Unit of Measure: unit of measure of the KPI
+* Risk Indicator: value representing the risk indicator of the KPI when it reaches values distant from its desired ones
+* Frequency: detection/calculation frequency of the KPI 
+* Domain: range of admissible value of the KPI
+* Target: desired/optimal value of the KPI
+* Deviation Tolerance: acceptable tolerance range around the KPI target value
+* Responsible: professional figure responsible for monitoring the KPI
+* Creator: user creator of the KPI definition within the Knowledge Base
+Objects Properties:
+* Related Machine: machine associated with the KPI
+* Computation-Related KPIs: other KPIs from which this KPI value is calculated
+
+
+Machines:
+Datatype Properties:
+* ID: unique identifier of the instantiated machine
+* Name: common name of the machine (human readable)
+* Description: textual description of the machine (human readable)
+* Capacity: acceptable size of the machined material (Large-Low-Medium)
+* Machined Material: raw material received in input by the machine
+* Location: physical location in which the machine is installed
+Objects Properties:
+* Production Pipeline Ordering: machines being part the same production pipeline of this machine (other machines with input/output dependencies with the machine) 
+* Related KPIs: KPIs associated with the machine
