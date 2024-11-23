@@ -15,19 +15,19 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_ollama import ChatOllama
 
 class Rag():
-    def __init__(self):
-        self.model = ChatOllama(model="llama3.2")
+    def __init__(self, model):
+        self.model = ChatOllama(model=model)
 
 
     # This function should be changed when we have the possibility to access to the knowledge base
 
     def load_documents(self, loader):
         self.loader = loader
-        self.data = self.loader.load()
-        self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
-        self.all_splits = self.text_splitter.split_documents(self.data)
-        self.local_embeddings = OllamaEmbeddings(model="nomic-embed-text")
-        self.vectorstore = Chroma.from_documents(documents=self.all_splits, embedding=self.local_embeddings)
+        data = self.loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
+        all_splits = text_splitter.split_documents(data)
+        local_embeddings = OllamaEmbeddings(model="nomic-embed-text")
+        self.vectorstore = Chroma.from_documents(documents=all_splits, embedding=local_embeddings)
         return self.vectorstore
 
 
