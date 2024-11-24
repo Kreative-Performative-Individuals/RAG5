@@ -1,7 +1,7 @@
 # Author: Borghini Davide (DavideB45 on GitHub)
 # This file is a heavily modified version of the original file. 
 # The original file is located in the main directory of the repository and is called RAG.py.
-# This is suppoed to be more readable and easier to understand (since there are comments in the code).
+# This is supposed to be more readable and easier to understand (since there are comments in the code).
 # It is also supposed to be more modular and easier to use in the future.
 import os
 import sys
