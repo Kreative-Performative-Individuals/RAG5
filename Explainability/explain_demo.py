@@ -34,6 +34,7 @@ def interactive_chat():
         # If the destination is found, generate the response
         response = rag.explainableQuery(user_input, destination)
         print("Response:", response)
+        print("\n")
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
