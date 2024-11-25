@@ -3,15 +3,14 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
-from StructuredOutput import KPIRequest, KPITrend
+from StructuredOutput import KPIRequest, KPITrend, RouteQuery
 from langchain_core.pydantic_v1 import Field
 from operator import itemgetter
 from typing import Literal
-from typing_extensions import TypedDict
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, RunnableMap
 from langchain_ollama import ChatOllama
 
 from datetime import datetime
@@ -23,8 +22,8 @@ class Rag():
 
     # This function should be changed when we have the possibility to access to the knowledge base
 
-    def load_documents(self, loader):
-        self.loader = loader
+    def load_documents(self,path):
+        self.loader = UnstructuredXMLLoader(path)
         data = self.loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
         all_splits = text_splitter.split_documents(data)
@@ -38,20 +37,20 @@ class Rag():
         today = datetime.today().strftime('%d/%m/%Y')
         prompt_1 = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are an expert on constructing queries with specific structures. Remember that today is {today}."),
+                ("system", "You are an expert on constructing queries with specific structures. {today} is the last possible day to consider."),
                 ("human", "{query}"),
             ]
         )
         prompt_2 = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are an expert on bunnies."),
+                ("system", "You are an expert on bunnies. Remember that today is {today}."),
                 ("human", "{query}"),
             ]
         )
 
         prompt_3 = ChatPromptTemplate.from_messages(
             [ 
-                ("system", "You must not answer the human query. Instead, tell them that you are not able to answer it."),
+                ("system", "You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
                 ("human", "{query}"),
             ]
         )
@@ -71,21 +70,21 @@ class Rag():
         )
 
 
-        class RouteQuery(TypedDict):
-            """Route query to destination."""
-            destination: Literal["KPI query","KPI trend", "bunny","else"] = Field(description="choose between KPI query construnctor, KPI trend, bunny expert or else if not strictly related to the previous categories")
-
-
         route_chain = (
             route_prompt
             | self.model.with_structured_output(RouteQuery)
             | itemgetter("destination")
         )
 
-        chain = {
+        today_date = (
+            RunnablePassthrough()
+            | RunnableLambda(lambda x: datetime.today().strftime('%d/%m/%Y'))
+        )
+        chain = RunnableMap({
             "destination": route_chain,  # "KPI query" or "bunny"
             "query": lambda x: x["query"],  # pass through input query
-        } | RunnableLambda(
+            "today": today_date,
+        }) | RunnableLambda(
             # if KPI query, chain_1. otherwise, chain_2...
             lambda x: chain_1 if x["destination"] == "KPI query" else chain_2 if x["destination"] == "bunny" else chain_4 if x["destination"] == "KPI trend" else chain_3,
         )

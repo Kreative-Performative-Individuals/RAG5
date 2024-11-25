@@ -1,10 +1,15 @@
 
 # inside this file we can write all the possibile Structured Output useful for Topic 3 or 8
 
-
+from typing_extensions import TypedDict
 from typing import Literal, List
 from typing import Optional
 from langchain_core.pydantic_v1 import BaseModel, Field
+
+class RouteQuery(TypedDict):
+            """Route query to destination."""
+            destination: Literal["KPI query","KPI trend", "bunny","else"] = Field(description="choose between KPI query construnctor, KPI trend, bunny expert or else if not strictly related to the previous categories")
+
 
 class KPIRequest(BaseModel):
     name: str = Field(description="The name of the KPI")    
