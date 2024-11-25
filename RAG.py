@@ -157,3 +157,35 @@ class Rag():
         }
         follow_up_response = follow_up_prompt_template | self.model | StrOutputParser()
         return follow_up_response.invoke(prompt_data)
+    
+    def conversation(self, kpi_name, machine_op_pairs, aggregation, start_date, end_date, result, docs):
+         
+        explanation = self.explain_kpi_result(
+            kpi_name=kpi_name,
+            machine_op_pairs=machine_op_pairs,
+            aggregation=aggregation,
+            start_date=start_date,
+            end_date=end_date,
+            result=result,
+            docs=docs
+        )
+        print(f"result explanation: {explanation}\n")
+
+        while True:
+            user_input = input("Do you have any further question?")
+            if user_input.lower() in ["no"]:
+                print("after end conversation maybe some explainbility related task can be done..")
+                break
+
+            # Follow-up response
+            follow_up_response = self.follow_up(
+                kpi_name=kpi_name,
+                result=result,
+                machine_op_pairs=machine_op_pairs,
+                aggregation=aggregation,
+                start_date=start_date,
+                end_date=end_date,
+                docs=docs,
+                user_input=user_input
+            )
+            print(f"{follow_up_response}\n")
