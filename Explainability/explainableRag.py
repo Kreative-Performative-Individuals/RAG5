@@ -26,7 +26,7 @@ from langchain_ollama import ChatOllama
 
 # Stuff for document loading
 from langchain_community.document_loaders import UnstructuredXMLLoader
-from example_explainability import slowly_print
+from example_explainability import slowly_print_load
 
 class Rag():
     def __init__(self, model):
@@ -139,7 +139,7 @@ class Rag():
             - the response for the query
         """
         if destination == "KPI query constructor":
-            print("Destination: KPI Query Constructor")
+            print("Working on it...")
             answered = False
             for i in range(5):
                 try:
@@ -155,7 +155,7 @@ class Rag():
 Selecting dates from {answer.start_date} to {answer.end_date}\n\
 Using KPI calculation engine to compute {answer.aggregation}\n\
 Formulating textual response"""
-            slowly_print(answer)
+            slowly_print_load(answer)
             return "Example answer, from rag"
-        print("Destination not found, general routing, destination:", destination)
-        return "I am not able to answer this query"
+        #print("Destination not found, general routing, destination:", destination)
+        return "Sorry, I am not able to answer this query"

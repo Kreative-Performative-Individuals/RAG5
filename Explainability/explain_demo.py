@@ -6,6 +6,7 @@
 # The answer part is not implemented and is not supposd to be implemented in this file
 
 from explainableRag import Rag
+from example_explainability import slowly_print
 import os
 
 # CReating the model (Ollama 3.2) that is the latest version of the model
@@ -19,13 +20,20 @@ def interactive_chat():
         if user_input.lower() == 'exit':
             print("Exiting the chat.")
             break
+        if user_input == "":
+            print("Error: The input is empty.")
+            continue
+        if user_input == "clear":
+            os.system('cls' if os.name == 'nt' else 'clear')
+            continue
         destination = "None_str"
         # Try to get the destination 3 times
         for i in range(3):
             try:
                 destination = rag.get_destination(user_input)
             except:
-                print("Error: The model is broken.")
+                #print("Error: The model is broken.")
+                slowly_print("...\r", delay=0.1)
                 continue
             if destination != "None_str":
                 break
@@ -33,7 +41,7 @@ def interactive_chat():
             print("Error: The model is broken.")
         # If the destination is found, generate the response
         response = rag.explainableQuery(user_input, destination)
-        print("Response:", response)
+        slowly_print(f"Response:{response}")
         print("\n")
 
 if __name__ == "__main__":
