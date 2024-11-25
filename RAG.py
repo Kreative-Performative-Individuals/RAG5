@@ -14,11 +14,12 @@ from langchain_core.runnables import RunnableLambda, RunnablePassthrough, Runnab
 from langchain_ollama import ChatOllama
 
 from datetime import datetime
+import time
 
 class Rag():
     def __init__(self, model):
         self.model = ChatOllama(model=model)
-
+        self.routing_chain: str = ''
 
     def format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
@@ -83,6 +84,7 @@ class Rag():
             RunnablePassthrough()
             | RunnableLambda(lambda x: datetime.today().strftime('%d/%m/%Y'))
         )
+        
         chain = RunnableMap({
             "destination": route_chain,  # "KPI query" or "bunny"
             "query": lambda x: x["query"],  # pass through input query
@@ -158,14 +160,14 @@ class Rag():
         follow_up_response = follow_up_prompt_template | self.model | StrOutputParser()
         return follow_up_response.invoke(prompt_data)
     
-    def conversation(self, kpi_name, machine_op_pairs, aggregation, start_date, end_date, result, docs):
-         
+    def conversation(self, KPI_engine_request, result, docs):
+        pairs = list(zip(KPI_engine_request.machine_names, KPI_engine_request.operation_names))
         explanation = self.explain_kpi_result(
-            kpi_name=kpi_name,
-            machine_op_pairs=machine_op_pairs,
-            aggregation=aggregation,
-            start_date=start_date,
-            end_date=end_date,
+            kpi_name=KPI_engine_request.name,
+            machine_op_pairs=pairs,
+            aggregation=KPI_engine_request.aggregation,
+            start_date=KPI_engine_request.start_date,
+            end_date=KPI_engine_request.end_date,
             result=result,
             docs=docs
         )
@@ -173,19 +175,33 @@ class Rag():
 
         while True:
             user_input = input("Do you have any further question?")
-            if user_input.lower() in ["no"]:
-                print("after end conversation maybe some explainbility related task can be done..")
+            if user_input.lower() in ["no", "end", "stop", "exit", "nah", "nope", "n"]:
+                print("Session ended.")
                 break
 
             # Follow-up response
             follow_up_response = self.follow_up(
-                kpi_name=kpi_name,
+                kpi_name=KPI_engine_request.name,
                 result=result,
-                machine_op_pairs=machine_op_pairs,
-                aggregation=aggregation,
-                start_date=start_date,
-                end_date=end_date,
+                machine_op_pairs=pairs,
+                aggregation=KPI_engine_request.aggregation,
+                start_date=KPI_engine_request.start_date,
+                end_date=KPI_engine_request.end_date,
                 docs=docs,
                 user_input=user_input
             )
             print(f"{follow_up_response}\n")
+            time.sleep(0.5)
+
+    def run(self, query):
+        try:
+            KPI_engine_query = self.routing().invoke({"query": query})
+            #KPI_engine_query is supposed to be sent to the KPI engine here, so we can compute the result
+            result = "0.75 kWh" #dummy result
+            self.load_documents("./KB_original.owl")
+            docs=self.vectorstore.similarity_search(query=query, k=10)
+            self.conversation(KPI_engine_query, result, docs)   
+        except Exception as e:
+            print(e)
+            return "Error: The model is broken."
+        #TODO: for the next milestone, generalize the run function using only the routing function or integrate the follow_up function into the routing function
