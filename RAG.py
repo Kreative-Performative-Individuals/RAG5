@@ -20,6 +20,9 @@ class Rag():
         self.model = ChatOllama(model=model)
 
 
+    def format_docs(self, docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+    
     # This function should be changed when we have the possibility to access to the knowledge base
 
     def load_documents(self,path):
@@ -93,3 +96,64 @@ class Rag():
     
     def get_model(self):
         return self.model
+    
+    # explanation for KPI result
+    def explain_kpi_result(self, kpi_name, machine_op_pairs, aggregation, start_date, end_date, result, docs):
+        dynamic_explanation_prompt = ChatPromptTemplate.from_template(template="""
+        Based on the following inputs, generate a detailed and natural language explanation:
+        - KPI Name: {kpi_name}
+        - Machines-Operations pairs: {machine_op_pairs}
+        - Aggregation: {aggregation}
+        - Start date: {start_date}
+        - End date: {end_date}
+        - KPI Value: {result}
+        - Docs: {docs}
+
+        Generate an explanation as if explaining to a user who asked a relevant question. Be clear, concise, and informative.
+        """)
+        prompt_data = {
+            "kpi_name": kpi_name,
+            "machine_op_pairs": machine_op_pairs,
+            "aggregation": aggregation,
+            "start_date": start_date,
+            "end_date": end_date,
+            "result": result,
+            "docs": docs,
+        }
+
+        explanation = dynamic_explanation_prompt | self.model | StrOutputParser()
+        return explanation.invoke(prompt_data)
+    
+    # Function for follow-up discussions
+    def follow_up(self, kpi_name, result, machine_op_pairs, aggregation, start_date, end_date, docs, user_input):
+
+        # Prompt template for follow-up query
+        follow_up_prompt_template = ChatPromptTemplate.from_template(
+            template="""
+            The user has requested further discussion about the KPI analysis. Based on the context:
+            - KPI Name: {kpi_name}
+            - Machines-Operations pairs: {machine_op_pairs}
+            - Aggregation: {aggregation}
+            - Start date: {start_date}
+            - End date: {end_date}
+            - KPI Value: {result}
+            - Docs: {docs}
+
+            The user said: "{user_input}"
+
+            Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion.
+            """
+        )
+
+        prompt_data = {
+            "kpi_name": kpi_name,
+            "machine_op_pairs": machine_op_pairs,
+            "aggregation": aggregation,
+            "start_date": start_date,
+            "end_date": end_date,
+            "result": result,
+            "docs": docs,
+            "user_input": user_input,
+        }
+        follow_up_response = follow_up_prompt_template | self.model | StrOutputParser()
+        return follow_up_response.invoke(prompt_data)
