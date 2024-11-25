@@ -3,7 +3,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
-from StructuredOutput import KPIRequest
+from StructuredOutput import KPIRequest, KPITrend
 from langchain_core.pydantic_v1 import Field
 from operator import itemgetter
 from typing import Literal
@@ -13,6 +13,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_ollama import ChatOllama
+
+from datetime import datetime
 
 class Rag():
     def __init__(self, model):
@@ -33,9 +35,10 @@ class Rag():
 
     def routing(self):
         
+        today = datetime.today().strftime('%d/%m/%Y')
         prompt_1 = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are an expert on constructing queries with specific structures."),
+                ("system", "You are an expert on constructing queries with specific structures. Remember that today is {today}."),
                 ("human", "{query}"),
             ]
         )
@@ -53,9 +56,11 @@ class Rag():
             ]
         )
 
+        
         chain_1 =  prompt_1 | self.model.with_structured_output(KPIRequest) 
         chain_2 = prompt_2 | self.model | StrOutputParser()
         chain_3= prompt_3 | self.model | StrOutputParser()
+        chain_4 = prompt_1 | self.model.with_structured_output(KPITrend)
 
         route_system = "Route the user's query to one of these: the KPI query constructor, the bunny expert, or 'else' if not strictly related to them."
         route_prompt = ChatPromptTemplate.from_messages(
@@ -68,7 +73,7 @@ class Rag():
 
         class RouteQuery(TypedDict):
             """Route query to destination."""
-            destination: Literal["KPI query", "bunny","else"] = Field(description="choose between KPI query construnctor, bunny expert or else if not strictly related to the previous categories")
+            destination: Literal["KPI query","KPI trend", "bunny","else"] = Field(description="choose between KPI query construnctor, KPI trend, bunny expert or else if not strictly related to the previous categories")
 
 
         route_chain = (
@@ -81,8 +86,8 @@ class Rag():
             "destination": route_chain,  # "KPI query" or "bunny"
             "query": lambda x: x["query"],  # pass through input query
         } | RunnableLambda(
-            # if KPI query, chain_1. otherwise, chain_2.
-            lambda x: chain_1 if x["destination"] == "KPI query" else chain_2 if x["destination"] == "bunny" else chain_3,
+            # if KPI query, chain_1. otherwise, chain_2...
+            lambda x: chain_1 if x["destination"] == "KPI query" else chain_2 if x["destination"] == "bunny" else chain_4 if x["destination"] == "KPI trend" else chain_3,
         )
 
         return chain

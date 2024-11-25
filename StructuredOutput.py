@@ -14,3 +14,9 @@ class KPIRequest(BaseModel):
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
     end_date: Optional[str] = Field(description="The end date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
     step: int = Field(description="The periodic time step in which the KPI is asked. Translate it in number of days. If it is not specified, use -1 as the default.")
+
+class KPITrend(BaseModel):
+    name: str = Field(description="The name of the KPI")
+    machine_names: List[str] = Field(description="A list of the machines the KPI is for")
+    start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
+    end_date: Optional[str] = Field(description="Today's date written in the format DD/MM/YY.")
