@@ -30,7 +30,7 @@ if __name__ == "__main__":
         sys.stdout.flush()
         time.sleep(0.1)
 
-def slowly_print(text:str, delay:float=0.1):
+def slowly_print_load(text:str, delay:float=0.1):
     for char in text:
         sys.stdout.write(char)
         sys.stdout.flush()
@@ -43,4 +43,11 @@ def slowly_print(text:str, delay:float=0.1):
             time.sleep(0.5)
         print("\r    ", end="\r")
         time.sleep(0.5)
+    print()
+
+def slowly_print(text:str, delay:float=0.1):
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(delay)
     print()
