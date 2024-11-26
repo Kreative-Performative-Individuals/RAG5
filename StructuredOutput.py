@@ -1,6 +1,7 @@
-
-# inside this file we can write all the possibile Structured Output useful for Topic 3 or 8
-
+# Authors: Marco Dell'Acqua, Nazifa Mosharrat, Alice Nicoletta 
+# 
+# The file contains all the classes for constructing any request used by the other groups 
+#
 from typing_extensions import TypedDict
 from typing import Literal, List
 from typing import Optional
@@ -25,3 +26,6 @@ class KPITrend(BaseModel):
     machine_names: List[str] = Field(description="A list of the machines the KPI is for")
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
     end_date: Optional[str] = Field(description="Today's date written in the format DD/MM/YY.")
+
+
+#TODO: inside this file we can write all the possibile Structured Output useful for Topic 3

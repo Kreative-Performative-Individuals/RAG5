@@ -1,3 +1,8 @@
+# Authors: Marco Dell'Acqua, Nazifa Mosharrat, Alice Nicoletta 
+# 
+# The file includes a version of the Rag class and all of its methods
+#
+
 from langchain_community.document_loaders import WebBaseLoader, TextLoader, UnstructuredXMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
