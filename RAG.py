@@ -4,7 +4,7 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from StructuredOutput import KPIRequest, KPITrend, RouteQuery
-from langchain_core.pydantic_v1 import Field
+from pydantic.v1 import Field
 from operator import itemgetter
 from typing import Literal
 
@@ -111,7 +111,7 @@ class Rag():
         - KPI Value: {result}
         - Docs: {docs}
 
-        Generate an explanation as if explaining to a user who asked a relevant question. Be clear, concise, and informative.
+        Generate an explanation as if explaining to a user who asked a relevant question. Be clear, concise, and informative. And the response should contain no more than 300 words
         """)
         prompt_data = {
             "kpi_name": kpi_name,
@@ -143,7 +143,7 @@ class Rag():
 
             The user said: "{user_input}"
 
-            Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion.
+            Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
             """
         )
 
@@ -171,10 +171,10 @@ class Rag():
             result=result,
             docs=docs
         )
-        print(f"result explanation: {explanation}\n")
+        print(f"\n\n>>>result explanation: {explanation}\n")
 
         while True:
-            user_input = input("Do you have any further question?")
+            user_input = input("\n\n>>>Do you have any further question?\n\n>>>")
             if user_input.lower() in ["no", "end", "stop", "exit", "nah", "nope", "n"]:
                 print("Session ended.")
                 break
@@ -205,3 +205,8 @@ class Rag():
             print(e)
             return "Error: The model is broken."
         #TODO: for the next milestone, generalize the run function using only the routing function or integrate the follow_up function into the routing function
+
+if __name__ == "__main__":
+    rag = Rag("llama3.2")
+    query = input(">>>Enter your query:\n\n>>>")
+    rag.run(query)

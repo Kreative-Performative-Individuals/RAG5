@@ -4,7 +4,7 @@
 from typing_extensions import TypedDict
 from typing import Literal, List
 from typing import Optional
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 class RouteQuery(TypedDict):
             """Route query to destination."""
