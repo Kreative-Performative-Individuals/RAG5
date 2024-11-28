@@ -41,70 +41,64 @@ class Rag():
         return self.vectorstore
 
 
+    def classify_query(self, query):
+        """
+        Classify the query into one of the predefined categories.
+        Categories: "KPI query", "bunny", "tabular", or "else".
+        """
+        if "KPI" in query or "performance" in query:
+            return "KPI query"
+        elif "bunny" in query or "rabbit" in query:
+            return "bunny"
+        elif "table" in query or "columns" in query:
+            return "tabular"
+        else:
+            return "else"
+
     def routing(self):
-        
+        """
+        Returns a callable chain that can be directly invoked.
+        """
         today = datetime.today().strftime('%d/%m/%Y')
+         
         prompt_1 = ChatPromptTemplate.from_messages(
-            [
-                ("system", "You are an expert on constructing queries with specific structures. {today} is the last possible day to consider."),
-                ("human", "{query}"),
-            ]
+            [("system", f"You are an expert on constructing queries with specific structures. {today} is the last possible day to consider."),
+             ("human", "{query}")]
         )
         prompt_2 = ChatPromptTemplate.from_messages(
-            [
-                ("system", "You are an expert on bunnies. Remember that today is {today}."),
-                ("human", "{query}"),
-            ]
+            [("system", f"You are an expert on bunnies. Remember that today is {today}."),
+             ("human", "{query}")]
         )
-
         prompt_3 = ChatPromptTemplate.from_messages(
-            [ 
-                ("system", "You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
-                ("human", "{query}"),
-            ]
+            [("system", f"You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
+             ("human", "{query}")]
         )
         prompt_4 = ChatPromptTemplate.from_messages(
-            [ 
-                ("system", "Generate the output in a tabular format with columns for {kpi_name}, {machine_op_pairs} , {machine_op_pairs} and {aggregation}."),
-                ("human", "{query}"),
-            ]
+            [("system", f"Generate the output in a tabular format with columns for {{kpi_name}}, {{machine_op_pairs}}, and {{aggregation}}."),
+             ("human", "{query}")]
         )
+
         
-        chain_1 =  prompt_1 | self.model.with_structured_output(KPIRequest) 
+        chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest)
         chain_2 = prompt_2 | self.model | StrOutputParser()
-        chain_3= prompt_3 | self.model | StrOutputParser()
+        chain_3 = prompt_3 | self.model | StrOutputParser()
         chain_4 = prompt_1 | self.model.with_structured_output(KPITrend)
-        chain_5= prompt_4 | self.model | StrOutputParser()
-        route_system = "Route the user's query to one of these: the KPI query constructor, the bunny expert, or 'else' if not strictly related to them."
-        route_prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", route_system),
-                ("human", "{query}"),
-            ]
-        )
+        chain_5 = prompt_4 | self.model | StrOutputParser()
 
+         
+        def route_query(query):
+            category = self.classify_query(query)  # Classify the query
+            if category == "KPI query":
+                return chain_1
+            elif category == "bunny":
+                return chain_2
+            elif category == "tabular":
+                return chain_5
+            else:
+                return chain_3
 
-        route_chain = (
-            route_prompt
-            | self.model.with_structured_output(RouteQuery)
-            | itemgetter("destination")
-        )
-
-        today_date = (
-            RunnablePassthrough()
-            | RunnableLambda(lambda x: datetime.today().strftime('%d/%m/%Y'))
-        )
         
-        chain = RunnableMap({
-            "destination": route_chain,  # "KPI query" or "bunny"
-            "query": lambda x: x["query"],  # pass through input query
-            "today": today_date,
-        }) | RunnableLambda(
-            # if KPI query, chain_1. otherwise, chain_2...
-            lambda x: chain_1 if x["destination"] == "KPI query" else chain_2 if x["destination"] == "bunny" else chain_4 if x["destination"] == "KPI trend" else chain_3,
-        )
-
-        return chain
+        return RunnableLambda(lambda inputs: route_query(inputs["query"]))
     
     def get_model(self):
         return self.model
