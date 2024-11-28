@@ -63,13 +63,18 @@ class Rag():
                 ("human", "{query}"),
             ]
         )
-
+        prompt_4 = ChatPromptTemplate.from_messages(
+            [ 
+                ("system", "Generate the output in a tabular format with columns for {kpi_name}, {machine_op_pairs} , {machine_op_pairs} and {aggregation}."),
+                ("human", "{query}"),
+            ]
+        )
         
         chain_1 =  prompt_1 | self.model.with_structured_output(KPIRequest) 
         chain_2 = prompt_2 | self.model | StrOutputParser()
         chain_3= prompt_3 | self.model | StrOutputParser()
         chain_4 = prompt_1 | self.model.with_structured_output(KPITrend)
-
+        chain_5= prompt_4 | self.model | StrOutputParser()
         route_system = "Route the user's query to one of these: the KPI query constructor, the bunny expert, or 'else' if not strictly related to them."
         route_prompt = ChatPromptTemplate.from_messages(
             [
