@@ -207,7 +207,6 @@ class Rag():
             [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it use {previous_answer} as message history to help you to write the email or the report. Remember that today is {today}."),
              ("human", "{query}")]
         )
-
         prompt_3 = ChatPromptTemplate.from_messages(
             [("system", f"You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
              ("human", "{query}")]
