@@ -1,3 +1,6 @@
 langchainvenv
 RAGG.ipynb
 __pycache__
+# Exclude virtual environment folders
+venv/
+*/venv/
