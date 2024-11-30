@@ -47,20 +47,21 @@ class Rag():
     
     def classify_query(self, query):
         
-        prompt = f"""
-        You are a classification expert. Classify the following query into one of these categories:
-        - KPI query: For questions related to KPI,performance indicators, metrics, or energy consumption.
-        - KPI trend: For questions about trends, patterns, or historical analysis.
-        - bunny: For questions related to rabbits or bunny-related topics.
-        - tabular: For questions about tables, columns, or tabular data.
-        - else: For questions that don't fit into the above categories.
+        prompt = ChatPromptTemplate.from_template(template="""
+        Classify the user query choosing between the following categories:
+        - KPI calculation: if the user explicitly wants to calculate a particular KPI
+        - KPI trend: only if the user explicitly wants to know the trend of a particular KPI,
+        - e-mail or reports: if the user explicitly asks to write an e-mail or a report about a particular KPI 
+        - else: if not strictly related to the previous categories
 
         Query: "{query}"
 
         Your classification (just return the category name): 
-        """
-        response = self.model.predict(prompt)
-        return response.strip()
+        """)
+        chain = prompt | self.model | StrOutputParser()
+        response = chain.invoke({"query": query})
+        print(type(response))
+        return response
 
     def routing(self):
         """
@@ -69,14 +70,15 @@ class Rag():
         today = datetime.today().strftime('%d/%m/%Y')
          
         prompt_1 = ChatPromptTemplate.from_messages(
-            [("system", f"You are an expert on constructing queries with specific structures. {today} is the last possible day to consider."),
+            [("system", f"You are an expert on constructing queries with specific structures. {today} should be considered as the default end date unless another end date is specified."),
              ("human", "{query}")]
         )
         
         prompt_2 = ChatPromptTemplate.from_messages(
-            [("system", f"You are an expert on bunnies. Remember that today is {today}."),
+            [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it. Remember that today is {today}."),
              ("human", "{query}")]
         )
+
         prompt_3 = ChatPromptTemplate.from_messages(
             [("system", f"You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
              ("human", "{query}")]
@@ -94,7 +96,7 @@ class Rag():
                         You are an expert in identifying and analyzing KPI trends. Your task is to understand the query and extract relevant details to construct a structured output. 
                         - Focus on trends, patterns, or historical analysis of KPIs.
                         - Today's date is {today}, which should be considered as the default end date unless another specific date is provided.
-                        - The system should intelligently decide on a reasonable start date for trend analysis when the user’s query doesn't explicitly specify a time frame.Assume the start date as the first day of the current month or year, as appropriate.
+                        - The system should intelligently decide on a reasonable start date for trend analysis when the user’s query doesn't explicitly specify a time frame. Assume the start date as the first day of the current month or year, as appropriate.
                         - The structured output should include the KPI name, machine names, start date, and end date.
                         """,
                     ),
@@ -110,9 +112,9 @@ class Rag():
         def route_query(query):
             category = self.classify_query(query)  # Classify the query
             print("category",category)
-            if category == "KPI query":
+            if category == "KPI calculation":
                 return chain_1
-            elif category == "bunny":
+            elif category == "e-mail or reports":
                 return chain_2
             elif category == "tabular":
                 return chain_4
@@ -232,6 +234,7 @@ class Rag():
     def run(self, query):
         try:
             KPI_engine_query = self.routing().invoke({"query": query})
+            print(KPI_engine_query)
             #KPI_engine_query is supposed to be sent to the KPI engine here, so we can compute the result
             result = "0.75 kWh" #dummy result
             self.load_documents("./KB_original.owl")
@@ -241,6 +244,8 @@ class Rag():
             print(e)
             return "Error: The model is broken."
         #TODO: for the next milestone, generalize the run function using only the routing function or integrate the follow_up function into the routing function
+
+
 
 if __name__ == "__main__":
     rag = Rag("llama3.2")
