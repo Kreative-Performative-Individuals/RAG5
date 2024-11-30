@@ -21,11 +21,7 @@ from langchain_ollama import ChatOllama
 from datetime import datetime
 import time
 
-from sklearn.linear_model import LogisticRegression
-from sentence_transformers import SentenceTransformer
-from sklearn.pipeline import make_pipeline
-import joblib
-import os
+ 
 import numpy as np
 class Rag():
     def __init__(self, model):
