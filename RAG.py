@@ -63,7 +63,8 @@ class Rag():
         print(type(response))
         return response
 
-    def routing(self):
+
+    def routing(self, destination):
         """
         Returns a callable chain that can be directly invoked.
         """
@@ -109,22 +110,22 @@ class Rag():
         chain_5 = prompt_5 | self.model.with_structured_output(KPITrend)
 
          
-        def route_query(query):
-            category = self.classify_query(query)  # Classify the query
-            print("category",category)
-            if category == "KPI calculation":
+        def route_query(destination):
+            # category = self.classify_query(query)  # Classify the query
+            print("destination",destination)
+            if destination == "KPI calculation":
                 return chain_1
-            elif category == "e-mail or reports":
+            elif destination == "e-mail or reports":
                 return chain_2
-            elif category == "tabular":
+            elif destination == "tabular":
                 return chain_4
-            elif category == "KPI trend":
+            elif destination == "KPI trend":
                 return chain_5
             else:
                 return chain_3
 
         
-        return RunnableLambda(lambda inputs: route_query(inputs["query"]))
+        return RunnableLambda(lambda inputs: route_query(destination))
     
     def get_model(self):
         return self.model
@@ -230,10 +231,40 @@ class Rag():
             self.history.append(follow_up_response)
             print(f"{follow_up_response}\n")
             #time.sleep(0.5)
+    
+
+    def direct_query(self, object, result, query, previous_answer):
+        """
+        Directly query the model
+        """
+        pairs = list(zip(
+            getattr(KPI_engine_request, "machine_names", [""]),
+            getattr(KPI_engine_request, "operation_names", [""])
+        ))
+        prompt = ChatPromptTemplate.from_template(
+            template=f"""
+            The user has requested further discussion about the KPI analysis. Based on the context:
+            - KPI Name: {object.name}
+            - Machines-Operations pairs: {pairs}
+            - Aggregation: {object.aggregation}
+            - Start date: {object.start_date}
+            - End date: {object.end_date}
+            - KPI Value: {result}
+            - Docs: {docs}
+
+            The user said: "{user_input}"
+            Conversation history: {history}
+            Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
+            """
+        )
+        chain = prompt | self.model | StrOutputParser()
+        return chain
 
     def run(self, query):
         try:
-            KPI_engine_query = self.routing().invoke({"query": query})
+            destination = self.classify_query(query)
+            KPI_engine_query = self.routing(destination).invoke({"query": query})
+            print(type(KPI_engine_query))
             print(KPI_engine_query)
             #KPI_engine_query is supposed to be sent to the KPI engine here, so we can compute the result
             result = "0.75 kWh" #dummy result

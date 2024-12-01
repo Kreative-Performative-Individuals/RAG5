@@ -19,7 +19,7 @@ class KPIRequest(BaseModel):
     aggregation: Literal["mean","min","max","var","std","sum"] = Field(description="The aggregation type of the KPI. If it is not specified, use 'mean' as the default")
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
     end_date: Optional[str] = Field(description="The end date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
-    step: int = Field(description="The periodic time step in which the KPI is asked. Translate it in number of days. If it is not specified, use -1 as the default.")
+    step: Optional[int] = Field(description="The periodic time step in which the KPI is asked. Translate it in number of days. If it is not specified, use -1 as the default.")
 
     def to_string(self):
            return "name: " + str(self.name) + "\nmachine_names: " + self.machine_names.__str__() +"\noperation_names: " + self.operation_names.__str__() + "\naggregation: " + str(self.aggregation) + "\nstart date: " + str(self.start_date) + "\nend date: " + str(self.end_date) + "\nstep: " + str(self.step)
