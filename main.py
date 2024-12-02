@@ -13,7 +13,7 @@ class Message(BaseModel):
 class BotResponse(BaseModel):
     response: str
     def set_response(self, response: str):
-        return response
+        self.response
 
 app = FastAPI()
 
@@ -33,15 +33,15 @@ async def calculate_response(user_message: str) -> str:
 # , response_model=BotResponse as second argument of this function
 @app.post("/chat/", response_model=BotResponse)
 #If the message is a Message object it returns error 422 but if it is a str it works
-def chat_with_bot(text: str):
+def chat_with_bot(message: str):
     try:
-        bot_reply = interactive_chat(text)
+        bot_reply = interactive_chat(message)
         return {"response": bot_reply}
     except Exception as e:
         return {"response": str(e)}
 
 # Aggiungere il ciclo for per gestire gli errori sulla costruzione delle KPI
-def interactive_chat(message: str) -> str:
+def interactive_chat(message: str, previous_query = "", previous_response = "") -> str:
         destination = "None_str"
         KPI_engine_query = None
         try:
