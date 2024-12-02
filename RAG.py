@@ -25,7 +25,7 @@ import time
 import numpy as np
 class Rag():
     def __init__(self, model):
-        self.model = ChatOllama(model=model)
+        self.model = ChatOllama(model=model, base_url="ollama:11434")
         self.routing_chain: str = ''
         self.history = []
         
