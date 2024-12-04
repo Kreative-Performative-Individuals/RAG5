@@ -12,7 +12,7 @@ COPY RAG.py .
 
 COPY StructuredOutput.py .
 
-COPY tests .
+COPY function_api.py .
 
 EXPOSE 8005
 

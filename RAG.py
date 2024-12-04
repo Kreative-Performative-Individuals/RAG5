@@ -20,6 +20,7 @@ from langchain_ollama import ChatOllama
 
 from datetime import datetime
 import time
+from function_api import ApiRequestCallTopic8
 
  
 import numpy as np
@@ -28,6 +29,7 @@ class Rag():
         self.model = ChatOllama(model=model, base_url="ollama:11434")
         self.routing_chain: str = ''
         self.history = []
+        self.result = None
         
     def format_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
@@ -231,15 +233,22 @@ class Rag():
             self.history.append(follow_up_response)
             print(f"{follow_up_response}\n")
             #time.sleep(0.5)
+
+    def compute_query(self, obj):
+        if isinstance(obj,KPIRequest):
+            print(obj)
+            return ApiRequestCallTopic8(obj)
+        else:
+            return obj
     
 
-    def direct_query(self, object, result, query, previous_answer):
+    def direct_query(self, obj, result, query, previous_answer):
         """
         Directly query the model
         """
         pairs = list(zip(
-            getattr(KPI_engine_request, "machine_names", [""]),
-            getattr(KPI_engine_request, "operation_names", [""])
+            getattr(obj, "machine_names", [""]),
+            getattr(obj, "operation_names", [""])
         ))
         prompt = ChatPromptTemplate.from_template(
             template=f"""
@@ -264,7 +273,7 @@ class Rag():
         try:
             destination = self.classify_query(query)
             KPI_engine_query = self.routing(destination).invoke({"query": query})
-            print(type(KPI_engine_query))
+            print(KPI_engine_query)
             print(KPI_engine_query)
             #KPI_engine_query is supposed to be sent to the KPI engine here, so we can compute the result
             result = "0.75 kWh" #dummy result
