@@ -1,4 +1,4 @@
-# Authors: Marco Dell'Acqua, Nazifa Mosharrat, Alice Nicoletta 
+# Authors: Marco Dell'Acqua, Nazifa Mosharrat, Alice Nicoletta, Borghini Davide
 # 
 # The file contains all the classes for constructing any request used by the other groups 
 #
@@ -28,12 +28,41 @@ class KPIRequest(BaseModel):
 
     def to_string(self):
            return "name: " + str(self.name) + "\nmachine_names: " + self.machine_names.__str__() +"\noperation_names: " + self.operation_names.__str__() + "\naggregation: " + str(self.aggregation) + "\nstart date: " + str(self.start_date) + "\nend date: " + str(self.end_date) + "\nstep: " + str(self.step)
+    
+    def explain_rag(self):
+        '''
+        This function returns a string that explains the KPI request
+        It can be used as an explanation for the user of what the model is doing
+        and what the model understands from the input
+        Three asterisks (***) are used at the end in order to allow GIU to split
+        the string from the actual response of the model
+        returns: a string that explains the KPI request in a human-readable way
+        '''
+        return f"Retrieving data of {self.machines}\n\
+Searching for KPI: {self.name}\n\
+Selecting dates from {self.start_date} to {self.end_date}\n\
+Using KPI calculation engine to compute {self.time_aggregation}\n\
+Formulating textual response\n***"
 
 class KPITrend(BaseModel):
     name: str = Field(description="The name of the KPI")
     machine_names: List[str] = Field(description="A list of the machines the KPI is for")
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
     end_date: Optional[str] = Field(description="Today's date written in the format DD/MM/YY.")
+
+    def explain_rag(self):
+        '''
+        This function returns a string that explains the KPI trend request
+        It can be used as an explanation for the user of what the model is doing
+        and what the model understands from the input.
+        Three asterisks (***) are used at the end in order to allow GIU to split 
+        the string from the actual response of the model
+        returns: a string that explains the KPI trend request in a human-readable way
+        '''
+        return f"Retrieving data of {self.machine_names}\n\
+Searching for KPI: {self.name}\n\
+Selecting dates from {self.start_date} to {self.end_date}\n\
+Computing the trend\n***"
 
 
 #TODO: inside this file we can write all the possibile Structured Output useful for Topic 3
