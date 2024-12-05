@@ -12,23 +12,135 @@ from StructuredOutput import KPIRequest, KPITrend, RouteQuery
 from pydantic.v1 import Field
 from operator import itemgetter
 from typing import Literal
+from langchain_core.output_parsers import PydanticOutputParser
+
 
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough, RunnableMap
 from langchain_ollama import ChatOllama
+import json
+import dateutil
 
 from datetime import datetime
 import time
-from function_api import ApiRequestCallTopic8
+from function_api import ApiRequestCallTopic8, ApiRequestCallTopic1
 
  
 import numpy as np
 class Rag():
     def __init__(self, model):
+        today = datetime.today().strptime(datetime.today().strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
         self.model = ChatOllama(model=model, base_url="ollama:11434")
         self.routing_chain: str = ''
-        self.history = []
+        self.examples = [
+                
+                {
+                    "query": "Can you calculate Machine Utilization Rate of Assembly Machine 1 for yesterday?",
+                    "output": json.dumps({
+                "name": "utilization_rate",
+                "machines": ["Assembly Machine 1"],
+                "operations": [],
+                "time_aggregation": "mean",
+                "start_date": (today - dateutil.relativedelta.relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'),
+                "end_date": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                "step": 1
+                })
+                },
+
+                {
+                    "query": "Can you calculate the mean of machine usage of all the machines in state idle the previous month to today?",
+                    "output": json.dumps({
+                        "name": "machine_usage_trend",
+                        "machines": [],
+                        "operations": ["idle"],
+                        "time_aggregation": "mean",
+                        "start_date": (today - dateutil.relativedelta.relativedelta(months=1)).strftime('%Y-%m-%d %H:%M:%S'),
+                        "end_date": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                        "step": 1
+                    })
+                },
+
+                {
+                    "query": "Calculate the maximum Machine Usage for Laser Welding Machine 1 for today, when idle.",
+                    "output": json.dumps({
+                "name": "machine_usage_trend",
+                "machines": ["Laser Welding Machine 1"],
+                "operations": ["idle"],
+                "time_aggregation": "max",
+                "start_date": (today - dateutil.relativedelta.relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S'),
+                "end_date": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                "step": 1
+                    })
+                },
+
+
+
+                {
+                        "query": "Calculate for the last 2 weeks, the total Cost Per Unit of Laser Welding Machine 2",
+                        "output": json.dumps({
+                    "name": "cost_per_unit",
+                    "machines": ["Laser Welding Machine 2"],
+                    "operations": [],
+                    "time_aggregation": "sum",
+                    "start_date": (today - dateutil.relativedelta.relativedelta(weeks=2)).strftime('%Y-%m-%d %H:%M:%S'),
+                    "end_date":  datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                    "step": 1
+                    })
+                },
+
+
+
+                {
+                    "query": "How much did we spend in the last month?",
+                    "output": json.dumps({
+                "name": "cost",
+                "machines": [],
+                "operations": [],
+                "time_aggregation": "sum",
+                "start_date": (today - dateutil.relativedelta.relativedelta(month=1)).strftime('%Y-%m-%d %H:%M:%S'),
+                "end_date": datetime.today().strftime('%Y-%m-%d %H:%M:%S'),
+                "step": 1 
+                })
+                },
+
+
+                {
+                    "query": "What is the bi-daily standard deviation of all cutting machines consumption in 2023?",
+                    "output": json.dumps({
+                "name": "energy_consumption",
+                "machines": ["Cutting Machine"],
+                "operations": [],
+                "time_aggregation": "std",
+                "start_date": "2023-01-01 00:00:00",
+                "end_date": "2023-12-31 00:00:00",
+                "step": 2
+                    })
+                },
+
+
+
+                {
+                        "query": "What is mean success rate of all medium capacity cutting machines when working, in 2024?",
+                        "output": json.dumps({
+                    "name": "success_rate",
+                    "machines": [
+                        "Medium Capacity Cutting Machine 1",
+                        "Medium Capacity Cutting Machine 2",
+                        "Medium Capacity Cutting Machine 3"
+                    ],
+                    "operations": [
+                        "working",
+                        "working",
+                        "working"
+                    ],
+                    "time_aggregation": "mean",
+                    "start_date": "2024-01-01 00:00:00",
+                    "end_date": "2024-12-31 00:00:00",
+                    "step": 1
+                        })
+                },
+                ]
         self.result = None
         
     def format_docs(self, docs):
@@ -51,7 +163,7 @@ class Rag():
         
         prompt = ChatPromptTemplate.from_template(template="""
         Classify the user query choosing between the following categories:
-        - KPI calculation: if the user explicitly wants to calculate a particular KPI
+        - KPI calculation: if the user explicitly wants to calculate a particular KPI, or asks for consumption or expenditure
         - KPI trend: only if the user explicitly wants to know the trend of a particular KPI,
         - e-mail or reports: if the user explicitly asks to write an e-mail or a report about a particular KPI 
         - else: if not strictly related to the previous categories
@@ -70,10 +182,25 @@ class Rag():
         """
         Returns a callable chain that can be directly invoked.
         """
-        today = datetime.today().strftime('%d/%m/%Y')
-         
+        today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        
+        example_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("human", "{query}"),
+                ("ai", "{output}"),
+            ]                                         
+        )                                             
+
+        few_shot_prompt = FewShotChatMessagePromptTemplate(
+            example_prompt=example_prompt,
+            examples=self.examples,
+        )
+
+        parser = PydanticOutputParser(pydantic_object=KPIRequest)
+
         prompt_1 = ChatPromptTemplate.from_messages(
             [("system", f"You are an expert on constructing queries with specific structures. {today} should be considered as the default end date unless another end date is specified."),
+             few_shot_prompt,
              ("human", "{query}")]
         )
         
@@ -105,7 +232,7 @@ class Rag():
                     ),
                     ("human", "{query}")
                 ])
-        chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest)
+        chain_1 = prompt_1 | self.model | parser
         chain_2 = prompt_2 | self.model | StrOutputParser()
         chain_3 = prompt_3 | self.model | StrOutputParser()
         chain_4 = prompt_4 | self.model.with_structured_output(KPITrend)
@@ -236,38 +363,42 @@ class Rag():
 
     def compute_query(self, obj):
         if isinstance(obj,KPIRequest):
+
+            docs, obj = ApiRequestCallTopic1(obj)
             print(obj)
-            return ApiRequestCallTopic8(obj)
+            return docs, ApiRequestCallTopic8(obj)
         else:
             return obj
     
 
-    def direct_query(self, obj, result, query, previous_answer):
+    def direct_query(self, obj, docs, result, query, previous_answer):
         """
         Directly query the model
         """
+        print(obj)
+        print(result)
         pairs = list(zip(
-            getattr(obj, "machine_names", [""]),
-            getattr(obj, "operation_names", [""])
+            getattr(obj, "machines", [""]),
+            getattr(obj, "operations", [""])
         ))
         prompt = ChatPromptTemplate.from_template(
             template=f"""
             The user has requested further discussion about the KPI analysis. Based on the context:
-            - KPI Name: {object.name}
+            - KPI Name: {obj.name}
             - Machines-Operations pairs: {pairs}
-            - Aggregation: {object.aggregation}
-            - Start date: {object.start_date}
-            - End date: {object.end_date}
+            - Aggregation: {obj.time_aggregation}
+            - Start date: {obj.start_date}
+            - End date: {obj.end_date}
             - KPI Value: {result}
             - Docs: {docs}
 
-            The user said: "{user_input}"
-            Conversation history: {history}
+            The user said: "{query}"
+            Conversation history: {previous_answer}
             Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
             """
         )
         chain = prompt | self.model | StrOutputParser()
-        return chain
+        return chain.invoke({"query":query})
 
     def run(self, query):
         try:

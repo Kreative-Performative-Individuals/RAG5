@@ -45,6 +45,7 @@ def interactive_chat(message: str, previous_query = "", previous_response = "") 
     destination = "None_str"
     KPI_engine_query = None
     rag = Rag(model="llama3.2")
+    actual_answer = ""
     try:
             
         destination = rag.classify_query(message)
@@ -55,14 +56,15 @@ def interactive_chat(message: str, previous_query = "", previous_response = "") 
         # object = rag.get_object(destination) -> explainableQuery function
 
         # exp_str = rag.get_explaination(object) -> trasforma in stringa object
-        rag.result = rag.compute_query(KPI_engine_query) #-> chiamata API a gruppo x a seconda di che oggetto abbiamo passato
-        # actual_answer = rag.direct_query(object, result, query, previous_answer) -> ritorna final answer che è la risposta data all'utente
+        docs, rag.result = rag.compute_query(KPI_engine_query) #-> chiamata API a gruppo x a seconda di che oggetto abbiamo passato
+        print(docs)
+        actual_answer = rag.direct_query(KPI_engine_query, docs, rag.result, message, previous_response) #-> ritorna final answer che è la risposta data all'utente
         # print(exp_str, "\n\n", actual_answer)
             
     except Exception as e:
         #print("Error: The model is broken.")
         print(e)
     # If the destination is found, generate the response
-    response = str(rag.result)
+    response = str(actual_answer)
     print(f"Response:{response}")
     return response

@@ -26,9 +26,6 @@ class KPIRequest(BaseModel):
     def to_json(self):
            return json.dumps(self,default=lambda o: o.__dict__, sort_keys=False, indent=4)
 
-    def to_string(self):
-           return "name: " + str(self.name) + "\nmachine_names: " + self.machine_names.__str__() +"\noperation_names: " + self.operation_names.__str__() + "\naggregation: " + str(self.aggregation) + "\nstart date: " + str(self.start_date) + "\nend date: " + str(self.end_date) + "\nstep: " + str(self.step)
-    
     def explain_rag(self):
         '''
         This function returns a string that explains the KPI request
