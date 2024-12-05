@@ -122,10 +122,10 @@ class Rag():
     def get_destination(self, query) -> str:
         """
         Get the destination of the query
-        args:
-         - query: the query that is going to be used to get the destination
-        return:
-            - the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
+        Args:
+            query (str): the query that is going to be used to get the destination
+        Returns:
+            the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
         """
         return self._get_destination.invoke({"query": query})
     
@@ -137,7 +137,8 @@ class Rag():
          - destination: the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
         return:
             - the response for the query
-        """
+        """ 
+        self.get_destination(query)
         if destination == "KPI query constructor":
             print("Working on it...")
             answered = False
