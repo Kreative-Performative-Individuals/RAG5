@@ -31,15 +31,13 @@ class KPIRequest(BaseModel):
         This function returns a string that explains the KPI request
         It can be used as an explanation for the user of what the model is doing
         and what the model understands from the input
-        Three asterisks (***) are used at the end in order to allow GIU to split
-        the string from the actual response of the model
         returns: a string that explains the KPI request in a human-readable way
         '''
         return f"Retrieving data of {self.machines}\n\
 Searching for KPI: {self.name}\n\
 Selecting dates from {self.start_date} to {self.end_date}\n\
 Using KPI calculation engine to compute {self.time_aggregation}\n\
-Formulating textual response\n***"
+Formulating textual response\n"
 
 class KPITrend(BaseModel):
     name: str = Field(description="The name of the KPI")
@@ -52,14 +50,12 @@ class KPITrend(BaseModel):
         This function returns a string that explains the KPI trend request
         It can be used as an explanation for the user of what the model is doing
         and what the model understands from the input.
-        Three asterisks (***) are used at the end in order to allow GIU to split 
-        the string from the actual response of the model
         returns: a string that explains the KPI trend request in a human-readable way
         '''
         return f"Retrieving data of {self.machine_names}\n\
 Searching for KPI: {self.name}\n\
 Selecting dates from {self.start_date} to {self.end_date}\n\
-Computing the trend\n***"
+Computing the trend\n"
 
 
 #TODO: inside this file we can write all the possibile Structured Output useful for Topic 3
