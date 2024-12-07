@@ -53,29 +53,26 @@ def chat_with_bot(message: str, previous_response: str | None = None):
 # Aggiungere il ciclo for per gestire gli errori sulla costruzione delle KPI
 def interactive_chat(message: str, previous_response: str) -> str:
     destination = "None_str"
-    KPI_engine_query = None
+    obj = None
     rag = Rag(model="llama3.2")
     actual_answer = ""
     try:
             
         destination = rag.classify_query(message)
-        KPI_engine_query = rag.routing(destination, previous_answer=previous_response).invoke({"query": message})
+        obj = rag.routing(destination, previous_answer=previous_response).invoke({"query": message})
+        exp_str = rag.explain_reasoning(destination, object) #-> trasforma in stringa object
         if destination != "KPI calculation":
-            print("RISPOSTA PRECEDENTE: "+previous_response)
-            return str(KPI_engine_query)
-        # la funzione get_object(destination) controlla la variabile destination ed eventualmente ritorna o KPIRequest o KPITrend o null
-        # object = rag.get_object(destination) -> explainableQuery function
+            response = str(exp_str) + "\n\n" + str(obj)
+            return response
 
-        # exp_str = rag.get_explaination(object) -> trasforma in stringa object
-        docs, rag.result = rag.compute_query(KPI_engine_query) #-> chiamata API a gruppo x a seconda di che oggetto abbiamo passato
-        print(docs)
-        actual_answer = rag.direct_query(KPI_engine_query, docs, rag.result, message, previous_response) #-> ritorna final answer che è la risposta data all'utente
-        # print(exp_str, "\n\n", actual_answer)
+        docs, rag.result = rag.compute_query(obj) #-> chiamata API a gruppo x a seconda di che oggetto abbiamo passato
+        actual_answer = rag.direct_query(obj, docs, rag.result, message, previous_response) #-> ritorna final answer che è la risposta data all'utente
+        print(exp_str, "\n\n", actual_answer)
             
     except Exception as e:
         #print("Error: The model is broken.")
         print(e)
     # If the destination is found, generate the response
-    response = str(actual_answer)
+    response = str(exp_str) + "\n\n" + str(actual_answer)
     print(f"Response:{response}")
     return response
