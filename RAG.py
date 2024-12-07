@@ -164,13 +164,12 @@ class Rag():
         prompt = ChatPromptTemplate.from_template(template="""
         Classify the user query choosing between the following categories:
         - KPI calculation: if the user explicitly wants to calculate a particular KPI, or asks for consumption or expenditure
-        - KPI trend: only if the user explicitly wants to know the trend of a particular KPI,
-        - e-mail or reports: if the user explicitly asks to write an e-mail or a report about a particular KPI 
+        - e-mail or reports: if the user explicitly asks to write an email or a report 
         - else: if not strictly related to the previous categories
 
         Query: "{query}"
 
-        Your classification (just return the category name): 
+        Your classification (just return the category name):
         """)
         chain = prompt | self.model | StrOutputParser()
         response = chain.invoke({"query": query})
@@ -178,7 +177,7 @@ class Rag():
         return response
 
 
-    def routing(self, destination):
+    def routing(self, destination, previous_answer):
         """
         Returns a callable chain that can be directly invoked.
         """
@@ -205,7 +204,7 @@ class Rag():
         )
         
         prompt_2 = ChatPromptTemplate.from_messages(
-            [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it. Remember that today is {today}."),
+            [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it use {previous_answer} as message history to help you to write the email or the report. Remember that today is {today}."),
              ("human", "{query}")]
         )
 
