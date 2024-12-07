@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 from RAG import Rag
@@ -16,6 +17,15 @@ class BotResponse(BaseModel):
         self.response
 
 app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins. You can specify allowed domains like ["http://example.com"]
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods. You can specify like ["GET", "POST"]
+    allow_headers=["*"],  # Allows all headers. You can specify specific headers like ["Content-Type"]
+)
 
 @app.on_event("startup")
 async def startup_event():
