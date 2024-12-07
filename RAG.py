@@ -9,7 +9,7 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from StructuredOutput import KPIRequest, KPITrend, RouteQuery
-from pydantic.v1 import Field
+from pydantic.v1 import BaseModel, Field
 from operator import itemgetter
 from typing import Literal
 from langchain_core.output_parsers import PydanticOutputParser
@@ -286,6 +286,28 @@ class Rag():
         explanation = dynamic_explanation_prompt | self.model | StrOutputParser()
         return explanation.invoke(prompt_data)
     
+    def explain_reasoning(dest:str=None, object:BaseModel=None):
+        '''
+        This function is used to explain the reasoning behind the model's decision
+        Three asterisks (***) are appended to the end of the explanation for easier parsing
+        Args:
+            dest: The destination of the query (which "category" the query belongs to)
+            object: The object that the model created to call an API (KPIRequest, KPITrend, etc.)
+        Returns:
+            A string showing what the model understood in a human-readable format
+        '''
+        expl = ""# The explanation string
+        if dest == None and object == None:
+            expl = "The model is answring based on his knowledge."
+        elif object != None:
+            if isinstance(object,KPIRequest):
+                expl = object.explain_rag()
+            elif isinstance(object,KPITrend):
+                expl = object.explain_rag()
+        elif dest == 'e-mail or reports':
+            expl = "The model is generating an email/report\n"
+        return expl + "***"
+
     # Function for follow-up discussions
     def follow_up(self, kpi_name, result, machine_op_pairs, aggregation, start_date, end_date, docs, user_input,history):
 
