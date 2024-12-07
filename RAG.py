@@ -285,7 +285,7 @@ class Rag():
         explanation = dynamic_explanation_prompt | self.model | StrOutputParser()
         return explanation.invoke(prompt_data)
     
-    def explain_reasoning(dest:str=None, object:BaseModel=None):
+    def explain_reasoning(self, dest:str=None, object:BaseModel=None):
         '''
         This function is used to explain the reasoning behind the model's decision
         Three asterisks (***) are appended to the end of the explanation for easier parsing
