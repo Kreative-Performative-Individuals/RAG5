@@ -74,7 +74,7 @@
             <ul>
                 <li><kbd>RAG.py</kbd>: contains the RAG class and its methods</li>
                 <li><kbd>StructuredOutput.py</kbd>: </li>
-                <li><kbd>function_api.py</kbd>:   </li>
+                 <li><kbd>function_api.py</kbd>:   </li>
                 <li><kbd>main.py</kbd>:   </li>
             </ul>
         </p>
@@ -106,6 +106,26 @@
             </ul>
         </ul>
         
-
+        <h2>StructuredOutput.py</h2>
+        
+        KPIRequest class. Used to generate a request to the KPI engine, based on the user query,
+        through langchain_ollama.with_structured_output() method. <br>
+        <ul>
+            <li>Attributes:</li>
+            <ul>
+                <li>name: str </li>
+                <li>machines: Optional[List[str]] </li>
+                <li>time_aggregation: Literal["mean","min","max","var","std","sum"] </li>
+                <li>start_date: Optional[str] </li>
+                <li>end_date: Optional[str]</li>
+                <li>step: Optional[int]</li>
+            </ul>
+            <li>Methods:</li>
+            <ul>
+                <li>to_json</li>
+                <li> explain_rag: returns a string that explains the KPI request inferred by the model. </li>
+            </ul>
+        
+        </ul>
  </body>
         
