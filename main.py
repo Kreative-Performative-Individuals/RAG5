@@ -52,6 +52,10 @@ def chat_with_bot(message: str, previous_response: str | None = None):
 
 # Aggiungere il ciclo for per gestire gli errori sulla costruzione delle KPI
 def interactive_chat(message: str, previous_response: str) -> str:
+    """
+    function for the high level interaction with the chatbot. Given a message from the user and
+    the previous response, if it exists, it returns a new response.
+    """
     destination = "None_str"
     obj = None
     rag = Rag(model="llama3.2")
@@ -60,13 +64,13 @@ def interactive_chat(message: str, previous_response: str) -> str:
             
         destination = rag.classify_query(message)
         obj = rag.routing(destination, previous_answer=previous_response).invoke({"query": message})
-        exp_str = rag.explain_reasoning(destination, object) #-> trasforma in stringa object
+        exp_str = rag.explain_reasoning(destination, object) # -> transforms object into a string
         if destination != "KPI calculation":
             response = str(exp_str) + "\n\n" + str(obj)
             return response
-
-        docs, rag.result = rag.compute_query(obj) #-> chiamata API a gruppo x a seconda di che oggetto abbiamo passato
-        actual_answer = rag.direct_query(obj, docs, rag.result, message, previous_response) #-> ritorna final answer che è la risposta data all'utente
+            
+        docs, rag.result = rag.compute_query(obj) #-> API call to group X based on the object class
+        actual_answer = rag.direct_query(obj, docs, rag.result, message, previous_response) #-> returns final answer, which is the one displayed to the user
         print(exp_str, "\n\n", actual_answer)
             
     except Exception as e:

@@ -29,7 +29,32 @@ from function_api import ApiRequestCallTopic8, ApiRequestCallTopic1
  
 import numpy as np
 class Rag():
+    """
+    Retrieval-Augmented Generation (RAG) model class.
+    
+    Attributes:
+    -model
+    -
+    -
+    Methods:
+    - classify_query(query): given a query, returns its class among KPI calculation, e-mail or reports
+        or else.
+    - routing: Returns a callable chain depending on the result of the classify_query method
+    - get_model: returns the model.
+    - explain_reasoning(dest:str=None, object:BaseModel=None): returns a brief description of what 
+        the model interpreted the query as.
+    - compute_query(obj): if obj is an instance of the class KPIRequest, it returns the KPI engine result
+        of the related query and a string of useful informations for the RAG.
+    - direct_query(obj, docs, result, query, previous_answer): generates the final response for the user, 
+        based on some history and what has been computed for the query
+    - run(query): for testing the model alone
+
+    """
     def __init__(self, model):
+        """
+        The default model is Llama3.2 and the class comes with a set of examples 
+        to perform few-shot learning on the LLM.
+        """
         today = datetime.today().strptime(datetime.today().strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
         self.model = ChatOllama(model=model, base_url="ollama:11434")
         self.routing_chain: str = ''
@@ -149,6 +174,10 @@ class Rag():
     # This function should be changed when we have the possibility to access to the knowledge base
 
     def load_documents(self,path):
+        """
+        Given a path for the documents to retrieve, the method load_documents creates a vectorstore 
+        for the embedded documents, from which interesting chunks can be retrieved by the RAG model.
+        """
         self.loader = UnstructuredXMLLoader(path)
         data = self.loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
@@ -160,7 +189,13 @@ class Rag():
 
     
     def classify_query(self, query):
-        
+        """
+        Classifies the user query between three possible classes:
+         - KPI calculation;
+         - e-mail or reports;
+         - else.
+        The classification is performed directly by the LLM via a template.
+        """
         prompt = ChatPromptTemplate.from_template(template="""
         Classify the user query choosing between the following categories:
         - KPI calculation: if the user explicitly wants to calculate a particular KPI, or asks for consumption or expenditure
@@ -180,6 +215,7 @@ class Rag():
     def routing(self, destination, previous_answer):
         """
         Returns a callable chain that can be directly invoked.
+        The chain is based on the chosen class by the classify_query method.
         """
         today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         
@@ -382,6 +418,11 @@ class Rag():
             #time.sleep(0.5)
 
     def compute_query(self, obj):
+        """
+        if obj is an instance of the class KPIRequest, the method adjusts 
+        the structured query by using the KB and then sends the query to the KPI engine.
+        The result, computed by the engine, is finally returned together with the docs 
+        """
         if isinstance(obj,KPIRequest):
 
             docs, obj = ApiRequestCallTopic1(obj)
@@ -393,7 +434,10 @@ class Rag():
 
     def direct_query(self, obj, docs, result, query, previous_answer):
         """
-        Directly query the model
+        Takes the relevant informations as input to generate the response to the user.
+        The response is conditioned by the informations contained in the structured query obj,
+        the informations docs retrieved from the Knowledge Base, the result given 
+        by the KPI engine, the user query itsself and the previous answer of the model.
         """
         print(obj)
         print(result)

@@ -15,6 +15,23 @@ class RouteQuery(TypedDict):
 
 
 class KPIRequest(BaseModel):
+    """
+    KPIRequest class. Used to generate a request to the KPI engine, based on the user query,
+    through langchain_ollama.with_structured_output() method.
+
+    Attributes:
+        - name: str 
+        - machines: Optional[List[str]]
+        - time_aggregation: Literal["mean","min","max","var","std","sum"]
+        - start_date: Optional[str] 
+        - end_date: Optional[str]
+        - step: Optional[int]
+    Methods:
+        - to_json
+        - explain_rag: returns a string that explains the KPI request inferred by the model.
+
+    """
+
     name: str = Field(description="The name of the KPI.")    
     machines: Optional[List[str]] = Field(description="A list of the machines the KPI is for")  
     operations: Optional[List[str]] = Field(description="A list of possible operations done by the machine. Which are: idle, working, offline and independent")
@@ -28,9 +45,9 @@ class KPIRequest(BaseModel):
 
     def explain_rag(self):
         '''
-        This function returns a string that explains the KPI request
+        This function returns a string that explains the KPI request.
         It can be used as an explanation for the user of what the model is doing
-        and what the model understands from the input
+        and what the model understands from the input.
         returns: a string that explains the KPI request in a human-readable way
         '''
         return f"Retrieving data of {self.machines}\n\
@@ -40,6 +57,7 @@ Using KPI calculation engine to compute {self.time_aggregation}\n\
 Formulating textual response\n"
 
 class KPITrend(BaseModel):
+
     name: str = Field(description="The name of the KPI")
     machine_names: List[str] = Field(description="A list of the machines the KPI is for")
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format DD/MM/YY. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year")
@@ -47,7 +65,7 @@ class KPITrend(BaseModel):
 
     def explain_rag(self):
         '''
-        This function returns a string that explains the KPI trend request
+        This function returns a string that explains the KPI trend request.
         It can be used as an explanation for the user of what the model is doing
         and what the model understands from the input.
         returns: a string that explains the KPI trend request in a human-readable way
