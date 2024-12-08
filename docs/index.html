@@ -61,7 +61,7 @@
     <header>
         <h1>API Documentation - Topic 5</h1>
         <p>Version: 0.1 | Last Updated: 08/12/2024</p>
-        <p>Authors: Alice Nicoletta, Marco Dell'Acqua, Nazifa 
+        <p>Authors: Alice Nicoletta, Marco Dell'Acqua, Nazifa Mosharrat
     </header>
     <main>
         <h2>Introduction</h2>
@@ -72,9 +72,31 @@
            <ul>
             The main files of our repository are the following:
             <ul>
-                <li><code>RAG.py</code>: contains the RAG class and its methods</li>
-                <li><code>StructuredOutput.py</code>: </li>
-                <li><code>function_api.py</code>:   </li>
-                <li><code>main.py</code>:   </li>
+                <li><kbd>RAG.py</kbd>: contains the RAG class and its methods</li>
+                <li><kbd>StructuredOutput.py</kbd>: </li>
+                <li><kbd>function_api.py</kbd>:   </li>
+                <li><kbd>main.py</kbd>:   </li>
             </ul>
         </p>
+
+        <h2>RAG.py</h2>
+            <code>class Rag()</code>
+            Retrieval-Augmented Generation (RAG) model class.
+    
+        Attributes:
+        -model
+        -
+        -
+        
+        Methods:
+        <li><kbd>classify_query(query)</kbd>: given a query, returns its class among KPI calculation, e-mail or reports
+        or else.</li>
+        <li><kbd>routing</kbd>: Returns a callable chain depending on the result of the classify_query method</li>
+        <li><kbd>get_model</kbd>: returns the model. </li>
+        <li><kbd>explain_reasoning(dest:str=None, object:BaseModel=None)</kbd> returns a brief description of what 
+        the model interpreted the query as. </li>
+        <li><kbd>compute_query(obj)</kbd>: if obj is an instance of the class KPIRequest, it returns the KPI engine result
+        of the related query and a string of useful informations for the RAG. </li>
+        <li><kbd>direct_query(obj, docs, result, query, previous_answer)</kbd> generates the final response for the user, 
+        based on some history and what has been computed for the query. </li>
+        
