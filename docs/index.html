@@ -69,7 +69,7 @@
            This documentation aims to fully describe the classes and methods implemented for the functionalities 
            of the RAG model and its interactions with the Knowledge Base and KPI engine.
            The full code can be consulted on the relative GitHub <a href="https://github.com/Kreative-Performative-Individuals/RAG5">repository</a>. 
-           <ul>
+           
             The main files of our repository are the following:
             <ul>
                 <li><kbd>RAG.py</kbd>: contains the RAG class and its methods</li>
@@ -80,23 +80,32 @@
         </p>
 
         <h2>RAG.py</h2>
-            <code>class Rag()</code>
-            Retrieval-Augmented Generation (RAG) model class.
-    
-        Attributes:
-        -model
-        -
-        -
         
-        Methods:
-        <li><kbd>classify_query(query)</kbd>: given a query, returns its class among KPI calculation, e-mail or reports
-        or else.</li>
-        <li><kbd>routing</kbd>: Returns a callable chain depending on the result of the classify_query method</li>
-        <li><kbd>get_model</kbd>: returns the model. </li>
-        <li><kbd>explain_reasoning(dest:str=None, object:BaseModel=None)</kbd> returns a brief description of what 
-        the model interpreted the query as. </li>
-        <li><kbd>compute_query(obj)</kbd>: if obj is an instance of the class KPIRequest, it returns the KPI engine result
-        of the related query and a string of useful informations for the RAG. </li>
-        <li><kbd>direct_query(obj, docs, result, query, previous_answer)</kbd> generates the final response for the user, 
-        based on some history and what has been computed for the query. </li>
+            
+        <li><code>class Rag()</code> <br>
+        Retrieval-Augmented Generation (RAG) model class. <br>
+        <ul>    
+            <li>Attributes:
+            <ul>
+                <li>model
+                <li>
+                <li>    
+            </ul>
+            <li>Methods:
+            <ul>    
+                <li><kbd>classify_query(query)</kbd>: given a query, returns its class among KPI calculation, e-mail or reports
+                or else.</li>
+                <li><kbd>routing</kbd>: Returns a callable chain depending on the result of the classify_query method</li>
+                <li><kbd>get_model</kbd>: returns the model. </li>
+                <li><kbd>explain_reasoning(dest:str=None, object:BaseModel=None)</kbd> returns a brief description of what 
+                the model interpreted the query as. </li>
+                <li><kbd>compute_query(obj)</kbd>: if obj is an instance of the class KPIRequest, it returns the KPI engine result
+                of the related query and a string of useful informations for the RAG. </li>
+                <li><kbd>direct_query(obj, docs, result, query, previous_answer)</kbd> generates the final response for the user, 
+                based on some history and what has been computed for the query. </li>
+            </ul>
+        </ul>
+        
+
+ </body>
         
