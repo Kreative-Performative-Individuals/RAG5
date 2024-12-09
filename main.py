@@ -60,6 +60,7 @@ def interactive_chat(message: str, previous_response: str) -> str:
     obj = None
     rag = Rag(model="llama3.2")
     actual_answer = ""
+    exp_str=""
     try:
             
         destination = rag.classify_query(message)
