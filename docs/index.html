@@ -8,8 +8,8 @@
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            margin: 0;
-            padding: 0;
+            margin-left: 300px;
+            margin-right: 300px;
             background-color: #f9f9f9;
             color: #333;
         }
@@ -38,6 +38,9 @@
             margin: 10px 0;
             padding-left: 20px;
         }
+        ul li {
+            margin-bottom: 15px;   
+        }
         code, pre {
             background: #f4f4f4;
             padding: 5px;
@@ -55,77 +58,341 @@
         a:hover {
             text-decoration: underline;
         }
+        .sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 15px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
     </style>
 </head>
 <body>
     <header>
         <h1>API Documentation - Topic 5</h1>
-        <p>Version: 0.1 | Last Updated: 08/12/2024</p>
-        <p>Authors: Alice Nicoletta, Marco Dell'Acqua, Nazifa Mosharrat
+        <p>Version: 1.0 | Last Updated: 09/12/2024 08:40</p>
+        <p>Authors: <a href="https://github.com/AliceNi99">Alice Nicoletta</a>, Marco Dell'Acqua, Nazifa Mosharrat
     </header>
-    <main>
-        <h2>Introduction</h2>
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn"
+            onclick="closeNav()">&times;</a>
+        <a href="#intro">Introduction</a>
+        <a href="#RAG">RAG.py</a>
+        <a href="#StOut">StructuredOutput.py</a>
+        <a href="#function_api">function_api.py</a>
+        <a href="#main">main.py</a>
+    </div>
+
+    <span style="font-size:30px;cursor:pointer"
+        onclick="openNav()">&#9776; Menu</span>
+
+    <script>
+        function openNav() {
+            document.getElementById("mySidenav").style.width = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidenav").style.width = "0";
+        }
+    </script>
+
+        <h2 id="intro">Introduction</h2>
         <p>
-           This documentation aims to fully describe the classes and methods implemented for the functionalities 
+           This documentation aims to describe the most relevant classes, methods and functions implemented for the functionalities 
            of the RAG model and its interactions with the Knowledge Base and KPI engine.
            The full code can be consulted on the relative GitHub <a href="https://github.com/Kreative-Performative-Individuals/RAG5">repository</a>. 
            
             The main files of our repository are the following:
             <ul>
-                <li><kbd>RAG.py</kbd>: contains the RAG class and its methods</li>
-                <li><kbd>StructuredOutput.py</kbd>: </li>
-                 <li><kbd>function_api.py</kbd>:   </li>
-                <li><kbd>main.py</kbd>:   </li>
+                <li><code>RAG.py</code> contains the RAG class and its methods</li>
+                <li><code>StructuredOutput.py</code> contains classes for structured queries, in
+                particular the KPIRequest class, used to query the KPI engine </li>
+                 <li><code>function_api.py</code> contains the functions to communicate with Knowledge Base and KPI engine through API calls</li>
+                <li><code>main.py</code> contains mostly high level functions, which are used for the communication with the GUI.  </li>
             </ul>
         </p>
 
-        <h2>RAG.py</h2>
-        
+        <h2 id="RAG">RAG.py</h2>
             
-        <li><code>class Rag()</code> <br>
+        <h3><code>class Rag()</code></h3> <br>
         Retrieval-Augmented Generation (RAG) model class. <br>
         <ul>    
             <li>Attributes:
             <ul>
-                <li>model
-                <li>
+                <li><code>model (str)</code> the LLM of choice, initialised as Llama3.2
+                <li><code>examples (str)</code> a set of examples for few-shot learning for KPI engine query constructiton.</li>
                 <li>    
             </ul>
             <li>Methods:
             <ul>    
-                <li><kbd>classify_query(query)</kbd>: given a query, returns its class among KPI calculation, e-mail or reports
+                <li><code>classify_query(query)</code> given a query, returns its class among KPI calculation, e-mail or reports
                 or else.</li>
-                <li><kbd>routing</kbd>: Returns a callable chain depending on the result of the classify_query method</li>
-                <li><kbd>get_model</kbd>: returns the model. </li>
-                <li><kbd>explain_reasoning(dest:str=None, object:BaseModel=None)</kbd> returns a brief description of what 
+                <li><code>routing()</code> Returns a callable chain depending on the result of the classify_query method</li>
+                <li><code>get_model()</code> returns the model. </li>
+                <li><code>explain_reasoning(dest:str=None, object:BaseModel=None)</code> returns a brief description of what 
                 the model interpreted the query as. </li>
-                <li><kbd>compute_query(obj)</kbd>: if obj is an instance of the class KPIRequest, it returns the KPI engine result
+                <li><code>compute_query(obj)</code> if obj is an instance of the class KPIRequest, it returns the KPI engine result
                 of the related query and a string of useful informations for the RAG. </li>
-                <li><kbd>direct_query(obj, docs, result, query, previous_answer)</kbd> generates the final response for the user, 
+                <li><code>direct_query(obj, docs, result, query, previous_answer)</code> generates the final response for the user, 
                 based on some history and what has been computed for the query. </li>
             </ul>
         </ul>
-        
-        <h2>StructuredOutput.py</h2>
+
+        <h3><code>function Rag.classify_query(query)</code></h3>
+        <p>
+            <strong>Description:</strong><br>
+            Classifies the user query between three possible classes:
+            <ul>
+            <li>KPI calculation</li> 
+            <li>e-mail or reports</li> 
+            <li>else.</li> 
+            </ul>
+           The classification is performed directly by the LLM via a template.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>query (str)</code> the user query</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code>string containing the KPI label, description and unit of measure and, for each machine, its label and description. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h3><code>function Rag.routing()</code></h3>
+        <p>
+            <strong>Description:</strong>
+            returns a callable chain based on the prediction made by <code>Rag.classify_query</code>. <br>
+            In particular, the structured query for the KPI engine is handled with <code>langchain_ollama.with_structured_output</code> function, with KPIRequest class as input. Moreover, the prompt is augmented with examples by using few-shot learning. <br>
+            If the request doesn't involve calculations, the invoke() will directly answer the user query.
+        </p>
+        <p><strong>Parameters:</strong></p> None
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code> a callable chain. When invoked, the chain will answer the user query or will generate a structured query, depending on the type of query. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h3><code>function Rag.explain_reasoning(dest:str=None, object:BaseModel=None)</code></h3>
+        <p>
+            <strong>Description:</strong>This function is used to explain the reasoning behind the model's decision. <br>
+            Three asterisks (***) are appended to the end of the explanation for easier parsing.
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>dest (str)</code> The destination of the query (which "category" the query belongs to)</li>
+                <li><code>object</code> The object that the model created to call an API (KPIRequest, KPITrend, etc.)</li>
+
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>expl (str)</code> A string showing what the model understood in a human-readable format. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h3><code>function Rag.compute_query(obj)</code></h3>
+        <p>
+            <strong>Description:</strong> if obj is an instance of the class KPIRequest, the method adjusts 
+            the structured query by using the KB and then sends it to the KPI engine.
+            The result, computed by the engine, is finally returned together with the informations retrieved from the KB. 
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>obj</code> any object</li>
+
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code> obj</code> (adjusted) input object</li>
+                <li><code> docs (str)</code> (available only if obj is an instance of KPIRequest class)  informations about KPI and machines, retrieved from the Knowledge Base.  </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+
+        <h3><code>function Rag.direct_query(obj, docs, result, query, previous_answer)</code></h3>
+        <p>
+            <strong>Description:</strong> takes the relevant informations as input to generate the response to the user. <br>
+            The response is conditioned by the informations contained in the structured query obj,
+            the informations docs retrieved from the Knowledge Base, the result given 
+            by the KPI engine, the user query itsself and the previous answer of the model.
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>obj (KPIRequest)</code> an instance of the KPIRequest class </li>
+            <li><code>docs (str)</code> informations  about KPI and machines retrieved from the Knowledge Base.</li>
+            <li><code>result (float)</code> the result of the KPI engine computation</li>
+            <li><code>query (str)</code> original user query</li>
+            <li><code>previous_answer (str)</code> previous answer, if it exists, provided by the chatbot.</li>
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code> actual_answer (str)</code> final answer, which is the one displayed to the user.</li>
+                
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h2 id="StOut">StructuredOutput.py</h2>
         
         KPIRequest class. Used to generate a request to the KPI engine, based on the user query,
         through langchain_ollama.with_structured_output() method. <br>
         <ul>
             <li>Attributes:</li>
-            <ul>
-                <li>name: str </li>
-                <li>machines: Optional[List[str]] </li>
-                <li>time_aggregation: Literal["mean","min","max","var","std","sum"] </li>
-                <li>start_date: Optional[str] </li>
-                <li>end_date: Optional[str]</li>
-                <li>step: Optional[int]</li>
+            <ul> 
+                <li><code>name: str</code> the name of the requested KPI</li>
+                <li><code> machines: Optional[List[str]]</code> the list of the machines names requested. </li>
+                <li><code> time_aggregation: Literal["mean","min","max","var","std","sum"]</code>
+                The aggregation operation; when not specified, the default is set to "mean".</li>
+                <li><code>start_date: Optional[str]</code> The starting date from which data are selected. The format is YYYY-MM-DD HH:MM:SS. </li>
+                <li><code>end_date: Optional[str]</code> the ending date to which data are selected. The format is YYYY-MM-DD HH:MM:SS. If not specified, it corresponds to the current day. </li>
+                <li><code>step: Optional[int]</code></li>
             </ul>
             <li>Methods:</li>
             <ul>
-                <li>to_json</li>
-                <li> explain_rag: returns a string that explains the KPI request inferred by the model. </li>
+                <li><code>to_json</code> returns a JSON formatted string of the object </li>
+                <li> <code>explain_rag</code> returns a string that explains the KPI request inferred by the model. </li>
             </ul>
         
         </ul>
+
+        <h2 id="function_api"> function_api.py</h2>
+        <h3><code>function ApiRequestCallTopic1(obj)</code></h3>
+        <p>
+            <strong>Description:</strong>Function used to call the Knowledge Base and receive a couple response, obj. 
+            The input obj is an instance of the class KPIRequest, while the output obj is an adjusted version
+            by exploiting the informations in the KB. Response is a string of informations about the 
+            query's KPIs and machines, which are useful for the RAG to generate a full response.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>obj (KPIRequest)</code> an instance of the class KPIRequest.</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code>string containing the KPI label, description and unit of measure and, for each machine, its label and description. </li>
+                <li><code>obj (KPIRequest)</code> the same instance in input but with KPI and machines names adjusted according to the Knowledge Base.</li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h3><code>function ApiRequestCallTopic8(obj)</code></h3>
+        <p>
+            <strong>Description:</strong>Function used to call the KPI engine and receive a response, which contain the query's desired result.
+            obj is an object of the class KPIRequest, while the result is a numerical value.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>obj (KPIRequest)</code> an instance of the class KPIRequest.</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>result (float)</code> the value of KPI requested by the user, computed by the KPI engine.</li>
+                
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+
+        <h2 id="main"> main.py</h2>
+        
+        <h3><code>function interactive_chat(message: str, previous_response: str)</code></h3>
+        <p>
+            <strong>Description:</strong><br>
+            function for the high level interaction with the chatbot. Given a message from the user and
+            the previous response, if it exists, it returns a new response. <br>
+            The function applies all of the other functions, methods and classes described so far.
+           
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>message (str)</code> the user query</li>
+		  <li><code>previous_response (str)</code> (if any exists) model's previous answer, initialised as empty string.</li>
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code> concatenation of <code>Rag.explain_reasoning</code> and <code>Rag.direct_query</code> outputs.</li>
+            </ul>
+        </p>
+
  </body>
+        
         
