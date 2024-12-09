@@ -195,7 +195,11 @@
         </p>
 
 		<strong>Examples:</strong>
-		<pre>>>> </pre>
+		<pre>>>>query: Write a report with the informations provided in the previous messages
+            >>>description: e-mail or reports
+
+            >>>query: Tell me the consume of all the machines
+            >>>description: KPI calculation </pre>
 
         <h3><code>function Rag.routing()</code></h3>
         <p>
@@ -215,7 +219,9 @@
         </p>
 
 		<strong>Examples:</strong>
-		<pre>>>> </pre>
+		<pre>>>>query: How much we spent today?
+            >>>object returned: name='daily_spending' machines=[] operations=[] time_aggregation='sum' start_date='2024-12-09 10:36:48' end_date='2024-12-09 23:59:59' step=1
+        </pre>
 
         <h3><code>function Rag.explain_reasoning(dest:str=None, object:BaseModel=None)</code></h3>
         <p>
@@ -239,7 +245,12 @@
         </p>
 
 		<strong>Examples:</strong>
-		<pre>>>> </pre>
+		<pre>>>>query: How much we spent today?
+            >>>exlpain reasoning result:  Retrieving data of [] Searching for KPI: daily_cost
+             Selecting dates from 2024-12-09 10:38:31 to 2024-12-09 23:59:59
+             Using KPI calculation engine to compute sum
+             Formulating textual response
+             *** </pre>
 
         <h3><code>function Rag.compute_query(obj)</code></h3>
         <p>
@@ -264,7 +275,11 @@
         </p>
 
 		<strong>Examples:</strong>
-		<pre>>>> </pre>
+		<pre>>>>query: How much we spent today?
+            >>>-DOCS FROM TOPIC 1: kpi label: total_energy_cost
+             kpi description: This KPI is a financial metric that quantifies the total expenditure on energy consumption over a specific period or for a specific process, operation, or system. It is a vital KPI for budgeting, cost analysis, and identifying opportunities for cost-saving measures.
+             kpi unit of measure: € 
+             -RESULT FROM TOPIC 8: -1.0</pre>
 
 
         <h3><code>function Rag.direct_query(obj, docs, result, query, previous_answer)</code></h3>
@@ -294,7 +309,18 @@
         </p>
 
 		<strong>Examples:</strong>
-		<pre>>>> </pre>
+		<pre>>>>query: How much we spent today?
+            >>>response: To clarify, you're asking about the total energy cost for yesterday's operations, considering the time frame from 10:38 AM on December 9th, 2024, to 11:59 PM on the same day.
+            
+             Can you please confirm that the KPI value of -1.0 represents a financial loss or an expenditure, rather than a gain? If it's a loss, this could indicate a potential issue with energy consumption or a need for cost-saving measures.
+            
+             To provide actionable insights, I'd like to ask a few more questions:
+            
+             1. Are there any specific machines or operations that contributed significantly to the high energy cost?
+             2. Have you noticed any unusual patterns in energy consumption recently? For example, are there any seasonal fluctuations or changes in usage during different times of the day?
+             3. Are there any opportunities for cost-saving measures that we could explore together? Perhaps optimizing equipment usage, adjusting temperature settings, or implementing more efficient lighting solutions?
+            
+             Regarding the KPI unit of measure, € (Euros), I assume this is the official currency used by your organization. </pre>
 
         <h2 id="StOut">StructuredOutput.py</h2>
         

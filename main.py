@@ -64,7 +64,7 @@ def interactive_chat(message: str, previous_response: str) -> str:
             
         destination = rag.classify_query(message)
         obj = rag.routing(destination, previous_answer=previous_response).invoke({"query": message})
-        exp_str = rag.explain_reasoning(destination, object) # -> transforms object into a string
+        exp_str = rag.explain_reasoning(destination, obj) # -> transforms object into a string
         if destination != "KPI calculation":
             response = str(exp_str) + "\n\n" + str(obj)
             return response
