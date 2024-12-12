@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin-left: 300px;
+            margin-right: 300px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        header, main {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 0.5em;
+        }
+        header p {
+            margin: 0;
+            color: #555;
+        }
+        h2 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+            margin-top: 1.5em;
+        }
+        ul {
+            list-style: square;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        ul li {
+            margin-bottom: 15px;   
+        }
+        code, pre {
+            background: #f4f4f4;
+            padding: 5px;
+            border: 1px solid #ddd;
+            font-family: Consolas, monospace;
+        }
+        pre {
+            overflow-x: auto;
+            padding: 10px;
+        }
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidenav a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 15px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+    </style>
+</head>
+<body>
+    <header>
+        <h1>API Documentation - Topic 5</h1>
+        <p>Version: 1.0 | Last Updated: 09/12/2024 08:40</p>
+        <p>Authors: <a href="https://github.com/AliceNi99">Alice Nicoletta</a>, Marco Dell'Acqua, Nazifa Mosharrat
+    </header>
+    <div id="mySidenav" class="sidenav">
+        <a href="javascript:void(0)" class="closebtn"
+            onclick="closeNav()">&times;</a>
+        <a href="#intro">Introduction</a>
+        <a href="#RAG">RAG.py</a>
+        <a href="#StOut">StructuredOutput.py</a>
+        <a href="#function_api">function_api.py</a>
+        <a href="#main">main.py</a>
+    </div>
+
+    <span style="font-size:30px;cursor:pointer"
+        onclick="openNav()">&#9776; Menu</span>
+
+    <script>
+        function openNav() {
+            document.getElementById("mySidenav").style.width = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidenav").style.width = "0";
+        }
+    </script>
+
+        <h2 id="intro">Introduction</h2>
+        <p>
+           This documentation aims to describe the most relevant classes, methods and functions implemented for the functionalities 
+           of the RAG model and its interactions with the Knowledge Base and KPI engine.
+           The full code can be consulted on the relative GitHub <a href="https://github.com/Kreative-Performative-Individuals/RAG5">repository</a>. <br>
+           Note that, aside from the <a href="https://github.com/Kreative-Performative-Individuals/RAG5/blob/main/requirements.txt">requirements</a>, 
+           it is required to install <a href="https://ollama.com/">Ollama</a> and download the <a href="https://ollama.com/library/llama3.2">Llama3.2</a> model. <br>
+            The main files of our repository are the following:
+            <ul>
+                <li><code>RAG.py</code> contains the RAG class and its methods</li>
+                <li><code>StructuredOutput.py</code> contains classes for structured queries, in
+                particular the KPIRequest class, used to query the KPI engine </li>
+                 <li><code>function_api.py</code> contains the functions to communicate with Knowledge Base and KPI engine through API calls</li>
+                <li><code>main.py</code> contains mostly high level functions, which are used for the communication with the GUI.  </li>
+            </ul>
+        </p>
+
+        <h2 id="RAG">RAG.py</h2>
+            
+        <h3><code>class Rag()</code></h3> <br>
+        Retrieval-Augmented Generation (RAG) model class. <br>
+        <ul>    
+            <li>Attributes:
+            <ul>
+                <li><code>model (str)</code> the LLM of choice, initialised as Llama3.2
+                <li><code>examples (str)</code> a set of examples for few-shot learning for KPI engine query constructiton.</li>    
+            </ul>
+            <li>Methods:
+            <ul>    
+                <li><code>classify_query(query)</code> given a query, returns its class among KPI calculation, e-mail or reports
+                or else.</li>
+                <li><code>routing()</code> Returns a callable chain depending on the result of the classify_query method</li>
+                <li><code>get_model()</code> returns the model. </li>
+                <li><code>explain_reasoning(dest:str=None, object:BaseModel=None)</code> returns a brief description of what 
+                the model interpreted the query as. </li>
+                <li><code>compute_query(obj)</code> if obj is an instance of the class KPIRequest, it returns the KPI engine result
+                of the related query and a string of useful informations for the RAG. </li>
+                <li><code>direct_query(obj, docs, result, query, previous_answer)</code> generates the final response for the user, 
+                based on some history and what has been computed for the query. </li>
+            </ul>
+        </ul>
+
+        <h3><code>function Rag.classify_query(query)</code></h3>
+        <p>
+            <strong>Description:</strong><br>
+            Classifies the user query between three possible classes:
+            <ul>
+            <li>KPI calculation</li> 
+            <li>e-mail or reports</li> 
+            <li>else.</li> 
+            </ul>
+           The classification is performed directly by the LLM via a template.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>query (str)</code> the user query</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code>string containing the KPI label, description and unit of measure and, for each machine, its label and description. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>>query: Write a report with the informations provided in the previous messages
+            >>>description: e-mail or reports
+
+            >>>query: Tell me the consume of all the machines
+            >>>description: KPI calculation </pre>
+
+        <h3><code>function Rag.routing()</code></h3>
+        <p>
+            <strong>Description:</strong>
+            returns a callable chain based on the prediction made by <code>Rag.classify_query</code>. <br>
+            In particular, the structured query for the KPI engine is handled with <code>langchain_ollama.with_structured_output</code> function, with KPIRequest class as input. Moreover, the prompt is augmented with examples by using few-shot learning. <br>
+            If the request doesn't involve calculations, the invoke() will directly answer the user query.
+        </p>
+        <p><strong>Parameters:</strong></p> None
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code> a callable chain. When invoked, the chain will answer the user query or will generate a structured query, depending on the type of query. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>>query: How much we spent today?
+            >>>object returned: name='daily_spending' machines=[] operations=[] time_aggregation='sum' start_date='2024-12-09 10:36:48' end_date='2024-12-09 23:59:59' step=1
+        </pre>
+
+        <h3><code>function Rag.explain_reasoning(dest:str=None, object:BaseModel=None)</code></h3>
+        <p>
+            <strong>Description:</strong>This function is used to explain the reasoning behind the model's decision. <br>
+            Three asterisks (***) are appended to the end of the explanation for easier parsing.
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>dest (str)</code> The destination of the query (which "category" the query belongs to)</li>
+                <li><code>object</code> The object that the model created to call an API (KPIRequest, KPITrend, etc.)</li>
+
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>expl (str)</code> A string showing what the model understood in a human-readable format. </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>>query: How much we spent today?
+            >>>exlpain reasoning result:  Retrieving data of [] Searching for KPI: daily_cost
+             Selecting dates from 2024-12-09 10:38:31 to 2024-12-09 23:59:59
+             Using KPI calculation engine to compute sum
+             Formulating textual response
+             *** </pre>
+
+        <h3><code>function Rag.compute_query(obj)</code></h3>
+        <p>
+            <strong>Description:</strong> if obj is an instance of the class KPIRequest, the method adjusts 
+            the structured query by using the KB and then sends it to the KPI engine.
+            The result, computed by the engine, is finally returned together with the informations retrieved from the KB. 
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>obj</code> any object</li>
+
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code> obj</code> (adjusted) input object</li>
+                <li><code> docs (str)</code> (available only if obj is an instance of KPIRequest class)  informations about KPI and machines, retrieved from the Knowledge Base.  </li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>>query: How much we spent today?
+            >>>-DOCS FROM TOPIC 1: kpi label: total_energy_cost
+             kpi description: This KPI is a financial metric that quantifies the total expenditure on energy consumption over a specific period or for a specific process, operation, or system. It is a vital KPI for budgeting, cost analysis, and identifying opportunities for cost-saving measures.
+             kpi unit of measure: € 
+             -RESULT FROM TOPIC 8: -1.0</pre>
+
+
+        <h3><code>function Rag.direct_query(obj, docs, result, query, previous_answer)</code></h3>
+        <p>
+            <strong>Description:</strong> takes the relevant informations as input to generate the response to the user. <br>
+            The response is conditioned by the informations contained in the structured query obj,
+            the informations docs retrieved from the Knowledge Base, the result given 
+            by the KPI engine, the user query itsself and the previous answer of the model.
+                
+        </p>
+        <p><strong>Parameters:</strong></p> 
+        <ul>
+            <li><code>obj (KPIRequest)</code> an instance of the KPIRequest class </li>
+            <li><code>docs (str)</code> informations  about KPI and machines retrieved from the Knowledge Base.</li>
+            <li><code>result (float)</code> the result of the KPI engine computation</li>
+            <li><code>query (str)</code> original user query</li>
+            <li><code>previous_answer (str)</code> previous answer, if it exists, provided by the chatbot.</li>
+        </ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code> actual_answer (str)</code> final answer, which is the one displayed to the user.</li>
+                
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>>query: How much we spent today?
+            >>>response: To clarify, you're asking about the total energy cost for yesterday's operations, considering the time frame from 10:38 AM on December 9th, 2024, to 11:59 PM on the same day.
+            
+             Can you please confirm that the KPI value of -1.0 represents a financial loss or an expenditure, rather than a gain? If it's a loss, this could indicate a potential issue with energy consumption or a need for cost-saving measures.
+            
+             To provide actionable insights, I'd like to ask a few more questions:
+            
+             1. Are there any specific machines or operations that contributed significantly to the high energy cost?
+             2. Have you noticed any unusual patterns in energy consumption recently? For example, are there any seasonal fluctuations or changes in usage during different times of the day?
+             3. Are there any opportunities for cost-saving measures that we could explore together? Perhaps optimizing equipment usage, adjusting temperature settings, or implementing more efficient lighting solutions?
+            
+             Regarding the KPI unit of measure, € (Euros), I assume this is the official currency used by your organization. </pre>
+
+        <h2 id="StOut">StructuredOutput.py</h2>
+        
+        KPIRequest class. Used to generate a request to the KPI engine, based on the user query,
+        through langchain_ollama.with_structured_output() method. <br>
+        <ul>
+            <li>Attributes:</li>
+            <ul> 
+                <li><code>name: str</code> the name of the requested KPI</li>
+                <li><code> machines: Optional[List[str]]</code> the list of the machines names requested. </li>
+                <li><code> time_aggregation: Literal["mean","min","max","var","std","sum"]</code>
+                The aggregation operation; when not specified, the default is set to "mean".</li>
+                <li><code>start_date: Optional[str]</code> The starting date from which data are selected. The format is YYYY-MM-DD HH:MM:SS. </li>
+                <li><code>end_date: Optional[str]</code> the ending date to which data are selected. The format is YYYY-MM-DD HH:MM:SS. If not specified, it corresponds to the current day. </li>
+                <li><code>step: Optional[int]</code></li>
+            </ul>
+            <li>Methods:</li>
+            <ul>
+                <li><code>to_json</code> returns a JSON formatted string of the object </li>
+                <li> <code>explain_rag</code> returns a string that explains the KPI request inferred by the model. </li>
+            </ul>
+        
+        </ul>
+
+        <h2 id="function_api"> function_api.py</h2>
+        <h3><code>function ApiRequestCallTopic1(obj)</code></h3>
+        <p>
+            <strong>Description:</strong>Function used to call the Knowledge Base and receive a couple response, obj. 
+            The input obj is an instance of the class KPIRequest, while the output obj is an adjusted version
+            by exploiting the informations in the KB. Response is a string of informations about the 
+            query's KPIs and machines, which are useful for the RAG to generate a full response.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>obj (KPIRequest)</code> an instance of the class KPIRequest.</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code>string containing the KPI label, description and unit of measure and, for each machine, its label and description. </li>
+                <li><code>obj (KPIRequest)</code> the same instance in input but with KPI and machines names adjusted according to the Knowledge Base.</li>
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+        <h3><code>function ApiRequestCallTopic8(obj)</code></h3>
+        <p>
+            <strong>Description:</strong>Function used to call the KPI engine and receive a response, which contain the query's desired result.
+            obj is an object of the class KPIRequest, while the result is a numerical value.
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>obj (KPIRequest)</code> an instance of the class KPIRequest.</li>
+		  
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>result (float)</code> the value of KPI requested by the user, computed by the KPI engine.</li>
+                
+            </ul>
+        </p>
+
+		<strong>Examples:</strong>
+		<pre>>>> </pre>
+
+
+        <h2 id="main"> main.py</h2>
+        
+        <h3><code>function interactive_chat(message: str, previous_response: str)</code></h3>
+        <p>
+            <strong>Description:</strong><br>
+            function for the high level interaction with the chatbot. Given a message from the user and
+            the previous response, if it exists, it returns a new response. <br>
+            The function applies all of the other functions, methods and classes described so far.
+           
+        </p>
+        <p><strong>Parameters:</strong></p>
+		<ul>
+		  <li><code>message (str)</code> the user query</li>
+		  <li><code>previous_response (str)</code> (if any exists) model's previous answer, initialised as empty string.</li>
+		</ul>
+
+
+		<p><strong>Returns:</strong></p>
+		<p>
+            <ul>
+                <li><code>response (str)</code> concatenation of <code>Rag.explain_reasoning</code> and <code>Rag.direct_query</code> outputs.</li>
+            </ul>
+        </p>
+
+ </body>
+        
+        

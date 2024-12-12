@@ -9,7 +9,7 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from StructuredOutput import KPIRequest, KPITrend, RouteQuery
-from pydantic.v1 import Field
+from pydantic.v1 import BaseModel, Field
 from operator import itemgetter
 from typing import Literal
 from langchain_core.output_parsers import PydanticOutputParser
@@ -29,7 +29,32 @@ from function_api import ApiRequestCallTopic8, ApiRequestCallTopic1
  
 import numpy as np
 class Rag():
+    """
+    Retrieval-Augmented Generation (RAG) model class.
+    
+    Attributes:
+    -model
+    -
+    -
+    Methods:
+    - classify_query(query): given a query, returns its class among KPI calculation, e-mail or reports
+        or else.
+    - routing: Returns a callable chain depending on the result of the classify_query method
+    - get_model: returns the model.
+    - explain_reasoning(dest:str=None, object:BaseModel=None): returns a brief description of what 
+        the model interpreted the query as.
+    - compute_query(obj): if obj is an instance of the class KPIRequest, it returns the KPI engine result
+        of the related query and a string of useful informations for the RAG.
+    - direct_query(obj, docs, result, query, previous_answer): generates the final response for the user, 
+        based on some history and what has been computed for the query
+    - run(query): for testing the model alone
+
+    """
     def __init__(self, model):
+        """
+        The default model is Llama3.2 and the class comes with a set of examples 
+        to perform few-shot learning on the LLM.
+        """
         today = datetime.today().strptime(datetime.today().strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
         self.model = ChatOllama(model=model, base_url="ollama:11434")
         self.routing_chain: str = ''
@@ -149,6 +174,10 @@ class Rag():
     # This function should be changed when we have the possibility to access to the knowledge base
 
     def load_documents(self,path):
+        """
+        Given a path for the documents to retrieve, the method load_documents creates a vectorstore 
+        for the embedded documents, from which interesting chunks can be retrieved by the RAG model.
+        """
         self.loader = UnstructuredXMLLoader(path)
         data = self.loader.load()
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
@@ -160,17 +189,22 @@ class Rag():
 
     
     def classify_query(self, query):
-        
+        """
+        Classifies the user query between three possible classes:
+         - KPI calculation;
+         - e-mail or reports;
+         - else.
+        The classification is performed directly by the LLM via a template.
+        """
         prompt = ChatPromptTemplate.from_template(template="""
         Classify the user query choosing between the following categories:
         - KPI calculation: if the user explicitly wants to calculate a particular KPI, or asks for consumption or expenditure
-        - KPI trend: only if the user explicitly wants to know the trend of a particular KPI,
-        - e-mail or reports: if the user explicitly asks to write an e-mail or a report about a particular KPI 
+        - e-mail or reports: if the user explicitly asks to write an email or a report 
         - else: if not strictly related to the previous categories
 
         Query: "{query}"
 
-        Your classification (just return the category name): 
+        Your classification (just return the category name):
         """)
         chain = prompt | self.model | StrOutputParser()
         response = chain.invoke({"query": query})
@@ -178,9 +212,10 @@ class Rag():
         return response
 
 
-    def routing(self, destination):
+    def routing(self, destination, previous_answer):
         """
         Returns a callable chain that can be directly invoked.
+        The chain is based on the chosen class by the classify_query method.
         """
         today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         
@@ -205,10 +240,9 @@ class Rag():
         )
         
         prompt_2 = ChatPromptTemplate.from_messages(
-            [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it. Remember that today is {today}."),
+            [("system", f"You are an expert on KPIs, machines and possible operations. You are also an expert on write emails and reports if the user explicitly requests it use {previous_answer} as message history to help you to write the email or the report. Remember that today is {today}."),
              ("human", "{query}")]
         )
-
         prompt_3 = ChatPromptTemplate.from_messages(
             [("system", f"You must not answer the human query. Instead, tell them that you are not able to answer it. Remember that today is {today}."),
              ("human", "{query}")]
@@ -286,6 +320,28 @@ class Rag():
         explanation = dynamic_explanation_prompt | self.model | StrOutputParser()
         return explanation.invoke(prompt_data)
     
+    def explain_reasoning(self, dest:str=None, object:BaseModel=None):
+        '''
+        This function is used to explain the reasoning behind the model's decision
+        Three asterisks (***) are appended to the end of the explanation for easier parsing
+        Args:
+            dest: The destination of the query (which "category" the query belongs to)
+            object: The object that the model created to call an API (KPIRequest, KPITrend, etc.)
+        Returns:
+            A string showing what the model understood in a human-readable format
+        '''
+        expl = ""# The explanation string
+        if dest == None and object == None:
+            expl = "The model is answring based on his knowledge."
+        elif object != None:
+            if isinstance(object,KPIRequest):
+                expl = object.explain_rag()
+            elif isinstance(object,KPITrend):
+                expl = object.explain_rag()
+        elif dest == 'e-mail or reports':
+            expl = "The model is generating an email/report\n"
+        return expl + "***"
+
     # Function for follow-up discussions
     def follow_up(self, kpi_name, result, machine_op_pairs, aggregation, start_date, end_date, docs, user_input,history):
 
@@ -362,6 +418,11 @@ class Rag():
             #time.sleep(0.5)
 
     def compute_query(self, obj):
+        """
+        if obj is an instance of the class KPIRequest, the method adjusts 
+        the structured query by using the KB and then sends the query to the KPI engine.
+        The result, computed by the engine, is finally returned together with the docs 
+        """
         if isinstance(obj,KPIRequest):
 
             docs, obj = ApiRequestCallTopic1(obj)
@@ -373,7 +434,10 @@ class Rag():
 
     def direct_query(self, obj, docs, result, query, previous_answer):
         """
-        Directly query the model
+        Takes the relevant informations as input to generate the response to the user.
+        The response is conditioned by the informations contained in the structured query obj,
+        the informations docs retrieved from the Knowledge Base, the result given 
+        by the KPI engine, the user query itsself and the previous answer of the model.
         """
         print(obj)
         print(result)
