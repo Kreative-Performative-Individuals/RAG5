@@ -80,6 +80,8 @@ def interactive_chat(message: str, previous_response: str) -> str:
     except Exception as e:
         #print("Error: The model is broken.")
         print(e)
+        exp_str = "Error: The model is broken."
+        actual_answer = "No answer available."
     # If the destination is found, generate the response
     response = str(exp_str) + "\n\n" + str(actual_answer)
     print(f"Response:{response}")
