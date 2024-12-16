@@ -63,11 +63,11 @@ def interactive_chat(message: str, previous_response: str) -> str:
     obj = None
     rag = Rag(model="llama3.2")
     actual_answer = ""
-    exp_str=""
+    exp_str = ""
     try:
             
         destination = rag.classify_query(message)
-        obj = rag.routing(destination, previous_answer=previous_response).invoke({"query": message})
+        obj = rag.routing(destination, previous_answer = previous_response).invoke({"query": message})
         exp_str = rag.explain_reasoning(destination, obj) # -> transforms object into a string
         if destination != "KPI calculation":
             response = str(exp_str) + "\n\n" + str(obj)
@@ -75,6 +75,7 @@ def interactive_chat(message: str, previous_response: str) -> str:
             
         docs, rag.result = rag.compute_query(obj) #-> API call to group X based on the object class
         actual_answer = rag.direct_query(obj, docs, rag.result, message, previous_response) #-> returns final answer, which is the one displayed to the user
+        exp_str = rag.explain_reasoning(destination, obj)   # Now the explaination is grounded with the object attributes
         print(exp_str, "\n\n", actual_answer)
             
     except Exception as e:

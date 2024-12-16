@@ -371,14 +371,14 @@ class Rag():
             A string showing what the model understood in a human-readable format
         '''
         expl = ""# The explanation string
-        if dest == None and object == None:
+        if dest is None and object is None:
             expl = "The model is answring based on his knowledge."
-        elif object != None:
+        elif object is not None:
             if isinstance(object,KPIRequest):
                 expl = object.explain_rag()
             elif isinstance(object,KPITrend):
                 expl = object.explain_rag()
-        elif dest == 'e-mail or reports':
+        elif 'e-mail' in dest or 'report' in dest:
             expl = "The model is generating an email/report\n"
         return expl + "***"
 
