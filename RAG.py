@@ -472,7 +472,7 @@ class Rag():
             return obj
     
 
-    def direct_query(self, obj, docs, result, query, previous_answer):
+    def direct_query(self, obj, docs, result, query):
         """
         Takes the relevant informations as input to generate the response to the user.
         The response is conditioned by the informations contained in the structured query obj,
@@ -497,7 +497,6 @@ class Rag():
             - Additional informations: {docs}
 
             The user said: "{{query}}"
-            Conversation history: {previous_answer}
             Based on all these informations, talk about the KPI value, returning a brief analysis.
             """
             #        Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
