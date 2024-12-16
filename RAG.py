@@ -56,7 +56,8 @@ class Rag():
         to perform few-shot learning on the LLM.
         """
         today = datetime.today().strptime(datetime.today().strftime('%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S')
-        self.model = ChatOllama(model=model, base_url="ollama:11434")
+        self.model = ChatOllama(model=model, temperature=0.5, base_url="ollama:11434")  # for docker
+        #self.model = ChatOllama(model=model, temperature=0.5)   #for local testing
         self.routing_chain: str = ''
         self.examples = [
                 
@@ -190,9 +191,11 @@ class Rag():
     
     def classify_query(self, query):
         """
-        Classifies the user query between three possible classes:
+        Classifies the user query between five  possible classes:
          - KPI calculation;
          - e-mail or reports;
+         - greetings; 
+         - questions about chatbot capabilities;
          - else.
         The classification is performed directly by the LLM via a template.
         """
@@ -200,6 +203,8 @@ class Rag():
         Classify the user query choosing between the following categories:
         - KPI calculation: if the user explicitly wants to calculate a particular KPI, or asks for consumption or expenditure
         - e-mail or reports: if the user explicitly asks to write an email or a report 
+        - greetings: if the user greets the chatbot
+        - questions about chatbot capabilities: if the user asks about the chatbot's capabilities;
         - else: if not strictly related to the previous categories
 
         Query: "{query}"
@@ -266,12 +271,43 @@ class Rag():
                     ),
                     ("human", "{query}")
                 ])
+        
+        
+        prompt_6 = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+                    If the user greets you, respond with a greeting.
+                    Remember that your name is Llama3.2 and you are an AI chatbot.
+                    Else, just answer normally to the user's query.                   
+                    """
+                ),
+                ("human", "{query}")
+            
+            ])
+        
+        prompt_7 = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """
+                    If the user asks about your capabilities, tell him that you are an AI chatbot that can help with KPI calculations, email or report writing.
+                    Return as examples of possible user question the following:
+                      "Can you calculate Machine Utilization Rate of Assembly Machine 1 for yesterday?"
+                      "How much power is consumed today?"
+                    """
+                ),
+                ("human", "{query}")
+            
+            ])
         chain_1 = prompt_1 | self.model | parser
         chain_2 = prompt_2 | self.model | StrOutputParser()
         chain_3 = prompt_3 | self.model | StrOutputParser()
         chain_4 = prompt_4 | self.model.with_structured_output(KPITrend)
         chain_5 = prompt_5 | self.model.with_structured_output(KPITrend)
-
+        chain_6 = prompt_6 | self.model | StrOutputParser()
+        chain_7 = prompt_7 | self.model | StrOutputParser()
          
         def route_query(destination):
             # category = self.classify_query(query)  # Classify the query
@@ -284,6 +320,10 @@ class Rag():
                 return chain_4
             elif destination == "KPI trend":
                 return chain_5
+            elif destination == "greetings":
+                return chain_6
+            elif destination == "questions about chatbot capabilities":
+                return chain_7
             else:
                 return chain_3
 
@@ -454,12 +494,14 @@ class Rag():
             - Start date: {obj.start_date}
             - End date: {obj.end_date}
             - KPI Value: {result}
-            - Docs: {docs}
+            - Additional informations: {docs}
 
-            The user said: "{query}"
+            The user said: "{{query}}"
             Conversation history: {previous_answer}
-            Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
+            Based on all these informations, talk about the KPI value, returning a brief analysis.
             """
+            #        Generate a detailed follow-up response. Offer actionable insights or ask clarifying questions to continue the discussion. And the response should contain no more than 300 words
+            #       """
         )
         chain = prompt | self.model | StrOutputParser()
         return chain.invoke({"query":query})
