@@ -1,6 +1,6 @@
 
 import urllib
-
+import urllib.request
 
 MARTIRI_STR = '<p><strong>Martiri</strong>&nbsp;&nbsp;<br />'
 HOMEPAGE_URL = 'https://www.dsu.toscana.it'
@@ -30,7 +30,7 @@ def get_menu_url(page_str:str) -> str:
     url = page_str.split(MARTIRI_STR)[1].split('href="')[1].split('"')[0]
     return HOMEPAGE_URL + url
 
-def get_menu_pdf(page_url: str):
+def get_menu_pdf(page_url: str) -> bytes:
     '''
     Get the menu pdf from the page
     Args:
