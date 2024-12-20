@@ -50,5 +50,5 @@ if __name__ == "__main__":
     print("\nUseful prompts to test the model:")
     print("1) Give me the biweekly mean for the energy consumption KPI in 2023 of Large Capacity Cutting Machine when idle and Small Capacity Cutting Machine when working")
     print("2) Get the max of the consumption KPI of the Laser Machine in 2023? ")
-    print("3) What is the speed of a plane?\n")
+    print("3) What is there for dinner on monday?\n")
     interactive_chat()

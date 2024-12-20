@@ -5,6 +5,8 @@
 # It is also supposed to be more modular and easier to use in the future.
 import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+from web_searches.smensiamo import get_menu_for
 sys.path.append(os.path.abspath(os.path.join('..')))
 
 from langchain_community.document_loaders import WebBaseLoader, TextLoader, UnstructuredXMLLoader
@@ -12,7 +14,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
-from StructuredOutput_simplified import KPIRequest ## line that gives error
+from StructuredOutput_simplified import KPIRequest, LunchRequest ## line that gives error
 from langchain_core.pydantic_v1 import Field
 from operator import itemgetter
 from typing import Literal
@@ -57,6 +59,13 @@ class Rag():
                 ("human", "{query}"),
             ]
         )
+        prompt_4 = ChatPromptTemplate.from_messages(
+            [("system", f"Generate an output in the form day of week (mon, tue, wed, tue, fri, sat) and dinner or lunch"),
+             ("human", "{query}")]
+        )
+
+        # chain for the lunch request
+        self.chain_4 = prompt_4 | self.model.with_structured_output(LunchRequest)
         # explainable chain (use model KPI expert)
         self._chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest) 
         # bunny chain (use only model knowledge + bunny expert)
@@ -67,8 +76,8 @@ class Rag():
         # Class that is going to be used to route the queries
         class RouteQuery(TypedDict):
             """Route query to destination."""
-            destination: Literal["KPI Query Constructor", "Other expert"] = Field(description="choose between KPI query or other expert")
-        route_system = "Which one of these experts is best suited to answer the query? the KPI query expert, or another expert? Just tell me the expert."
+            destination: Literal["KPI Query", "food"] = Field(description="choose between KPI query, food")
+        route_system = "Which one of these topic is the human query about?."
         route_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", route_system),
@@ -84,8 +93,11 @@ class Rag():
 
         def get_dest(x):
             try:
+                print(f'dest str = {x}')
                 if "kpi" in x['destination'].lower():
                     return "KPI query constructor"
+                if "food" in x['destination'].lower() or "menu" in x['destination'].lower() or "lunch" in x['destination'].lower() or "dinner" in x['destination'].lower():
+                    return "food"
                 else:
                     return "Other expert"
             except:
@@ -137,8 +149,7 @@ class Rag():
          - destination: the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
         return:
             - the response for the query
-        """ 
-        self.get_destination(query)
+        """
         if destination == "KPI query constructor":
             print("Working on it...")
             answered = False
@@ -158,5 +169,24 @@ Using KPI calculation engine to compute {answer.aggregation}\n\
 Formulating textual response"""
             slowly_print_load(answer)
             return "Example answer, from rag"
+        elif destination == "Other expert":
+            return "Sorry, I am not able to explain this query"
+        elif destination == "food":
+            print("Working on it...")
+            answered = False
+            for i in range(5):
+                try:
+                    answer:LunchRequest = self.chain_4.invoke({"query": query})
+                    answered = True
+                except:
+                    continue
+                if answered:
+                    break
+            if not answered:
+                return "Error: The model is broken."
+            print(f'Getting menu for {answer.day} {answer.meal}')
+            answer = get_menu_for(answer.day, answer.meal != 'dinner')
+            return answer
+
         #print("Destination not found, general routing, destination:", destination)
         return "Sorry, I am not able to answer this query"
