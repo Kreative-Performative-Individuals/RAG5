@@ -50,7 +50,7 @@ class KPIRequest(BaseModel):
         and what the model understands from the input.
         returns: a string that explains the KPI request in a human-readable way
         '''
-        return f"Retrieving data of {self.machines}\n\
+        return f"Retrieving data of {'All machines' if len(self.machines) == 0 else self.machines}\n\
 Searching for KPI: {self.name}\n\
 Selecting dates from {self.start_date} to {self.end_date}\n\
 Using KPI calculation engine to compute {self.time_aggregation}\n\
