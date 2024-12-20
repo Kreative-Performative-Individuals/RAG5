@@ -4,3 +4,4 @@ __pycache__
 # Exclude virtual environment folders
 venv/
 */venv/
+web_searches/*.pdf
