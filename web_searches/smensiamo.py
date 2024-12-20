@@ -12,4 +12,8 @@ if __name__ == '__main__':
     menu_url = get_menu_url(page_str)
     menu_pdf = get_menu_pdf(menu_url)
     save_pdf(menu_pdf, PATH_FOR_PDF)
-    crop_pdf(PATH_FOR_PDF, 50, 100, 720, 440)
+    crop_pdf(PATH_FOR_PDF, X_START, Y_START, X_END, Y_END)
+    
+    for frid in range(6):
+        menu_at = crop_pdftable_to_daymeal(PATH_FOR_PDF, frid, dinner=False)
+        menu_at = crop_pdftable_to_daymeal(PATH_FOR_PDF, frid, dinner=True)
