@@ -2,6 +2,8 @@ import fitz  # PyMuPDF
 from PIL import Image
 import pytesseract
 
+# this does not work if not executed from the terminal
+pytesseract.pytesseract.tesseract_cmd = '/bin/tesseract'
 # Sizes of the menus of mensa Martiri (Pisa)
 X_START = 50
 X_END = 720
@@ -58,9 +60,9 @@ def crop_pdftable_to_daymeal(input_pdf:str, day:int, dinner:bool=True):
     '''
     x1 = X_START + CELL_WIDTH * day + day
     x2 = x1 + CELL_WIDTH
-    y1 = Y_START if dinner else Y_START + CELL_HEIGHT
-    y2 = Y_START + CELL_HEIGHT if dinner else Y_END
-    if dinner:
+    y1 = Y_START if not dinner else Y_START + CELL_HEIGHT
+    y2 = Y_START + CELL_HEIGHT if not dinner else Y_END
+    if not dinner:
         y2 -= 12
     else:
         y1 -= 12
@@ -97,17 +99,42 @@ def day_from_int(day:int) -> str:
     '''
     return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day]
 
-def get_text_from_pdf(image_path: str, lang: str = 'it') -> str:
+def get_text_from_pdf(pdf_path: str, output_txt: str = None, dpi: int = 300, lang: str = "eng") -> str:
     """
-    Perform OCR on an image to extract text.
+    Perform OCR on a PDF file and extract text.
 
     Args:
-        image_path (str): Path to the input image.
+        pdf_path (str): Path to the input PDF.
+        output_txt (str): Path to save the extracted text. If None, text is not saved.
+        dpi (int): Resolution for rendering the PDF pages to images.
         lang (str): Language for OCR. Default is English ('eng').
 
     Returns:
-        str: The extracted text from the image.
+        str: The extracted text from the PDF.
     """
-    # Perform OCR using Tesseract
-    text = pytesseract.image_to_string(Image.open(image_path), lang=lang)
-    return text
+    extracted_text = ""
+
+    # Open the PDF
+    pdf_document = fitz.open(pdf_path)
+    for page_number in range(len(pdf_document)):
+        # Render the page as an image
+        page = pdf_document[page_number]
+        pix = page.get_pixmap(dpi=dpi)  # Render at the specified DPI
+        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+        # Perform OCR on the image
+        page_text = pytesseract.image_to_string(image, lang=lang)
+        extracted_text += f"\n--- Page {page_number + 1} ---\n"
+        extracted_text += page_text
+
+    # Optionally save the text to a file
+    if output_txt:
+        with open(output_txt, "w", encoding="utf-8") as f:
+            f.write(extracted_text)
+
+    pdf_document.close()
+    extracted_text = extracted_text.split('--- Page 1 ---')[1]
+    extracted_text = extracted_text.replace('\n\n', '\n')
+    extracted_text = extracted_text.rstrip()
+
+    return extracted_text
