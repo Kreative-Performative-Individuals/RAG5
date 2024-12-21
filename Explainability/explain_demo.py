@@ -11,7 +11,7 @@ import os
 
 # CReating the model (Ollama 3.2) that is the latest version of the model
 # The model is the one that is going to be used to generate the responses
-rag = Rag(model="llama3.2")
+rag = Rag(model="llama3.1:8b")
 
 def interactive_chat():
     while True:

@@ -18,4 +18,4 @@ class KPIRequest(BaseModel):
 
 class LunchRequest(BaseModel):
     day: str = Field(description="The day of the week. (mon,tue,wed,thu,fri,sat)")
-    meal: Literal['lunch', 'dinner'] = Field(description="The meal of the day (lunch or dinner). If specified, use 'lunch' as the default")
+    meal: Literal['lunch', 'dinner'] = Field(description="The meal of the day (lunch or dinner). 'lunch' as the default")

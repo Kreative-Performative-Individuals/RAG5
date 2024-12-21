@@ -3,3 +3,4 @@ sudo apt install tesseract-ocr
 PyMuPDF
 pytesseract
 Pillow
+ollama run llama3.1:8b

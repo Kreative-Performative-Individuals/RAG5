@@ -60,7 +60,7 @@ class Rag():
             ]
         )
         prompt_4 = ChatPromptTemplate.from_messages(
-            [("system", f"Generate an output in the form day of week (mon, tue, wed, tue, fri, sat) and dinner or lunch"),
+            [("system", f"Generate an output in the form day of week (mon, tue, wed, tue, fri, sat) and lunch or dinner; lunch is default if not specified"),
              ("human", "{query}")]
         )
 
@@ -185,7 +185,7 @@ Formulating textual response"""
             if not answered:
                 return "Error: The model is broken."
             print(f'Getting menu for {answer.day} {answer.meal}')
-            answer = get_menu_for(answer.day, answer.meal != 'dinner')
+            answer = get_menu_for(answer.day, answer.meal == 'dinner')
             return answer
 
         #print("Destination not found, general routing, destination:", destination)
