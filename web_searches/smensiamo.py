@@ -21,6 +21,7 @@ def get_menu_for(day:str, dinner:bool=False) -> str:
     day = int_from_day(day)
     path = f'./web_searches/cropped_menu_{day}_{dinner}.pdf'
     if not os.path.exists(path):
+        print('Downloading the menu...')
         page_str = get_page_string(TOSCANA_MENU_URL)
         menu_url = get_menu_url(page_str)
         menu_pdf = get_menu_pdf(menu_url)

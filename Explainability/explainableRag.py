@@ -5,6 +5,8 @@
 # It is also supposed to be more modular and easier to use in the future.
 import os
 import sys
+
+from pydantic import BaseModel
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from web_searches.smensiamo import get_menu_for
 sys.path.append(os.path.abspath(os.path.join('..')))
@@ -14,7 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
-from StructuredOutput_simplified import KPIRequest, LunchRequest ## line that gives error
+from StructuredOutput_simplified import KPIRequest, LunchRequest, RouteQuery ## line that gives error
 from langchain_core.pydantic_v1 import Field
 from operator import itemgetter
 from typing import Literal
@@ -63,6 +65,12 @@ class Rag():
             [("system", f"Generate an output in the form day of week (mon, tue, wed, tue, fri, sat) and lunch or dinner; lunch is default if not specified"),
              ("human", "{query}")]
         )
+        prompt_5 = ChatPromptTemplate.from_messages(
+            [
+                ("system", 'Anwer the user query. The actual answer is known ad it is: {context}.'),
+                ("human", "{query}")
+            ]
+        )
 
         # chain for the lunch request
         self.chain_4 = prompt_4 | self.model.with_structured_output(LunchRequest)
@@ -72,11 +80,10 @@ class Rag():
         self._chain_2 = prompt_2 | self.model | StrOutputParser()
         # unexpected chain (tell the user that the model is not able to answer)
         self._chain_3 = prompt_3 | self.model | StrOutputParser()
+        # general direct query
+        self.chain_5 = prompt_5 | self.model | StrOutputParser()
 
         # Class that is going to be used to route the queries
-        class RouteQuery(TypedDict):
-            """Route query to destination."""
-            destination: Literal["KPI Query", "food"] = Field(description="choose between KPI query, food")
         route_system = "Which one of these topic is the human query about?."
         route_prompt = ChatPromptTemplate.from_messages(
             [
@@ -93,15 +100,15 @@ class Rag():
 
         def get_dest(x):
             try:
-                print(f'dest str = {x}')
+                #print(f'dest str = {x}')
                 if "kpi" in x['destination'].lower():
                     return "KPI query constructor"
                 if "food" in x['destination'].lower() or "menu" in x['destination'].lower() or "lunch" in x['destination'].lower() or "dinner" in x['destination'].lower():
                     return "food"
                 else:
-                    return "Other expert"
+                    return "none"
             except:
-                return "Other expert"
+                return "none"
             
         self._get_destination = {
             "destination": route_chain,  # "KPI query" or "bunny"
@@ -130,6 +137,11 @@ class Rag():
         self.vectorstore = Chroma.from_documents(documents=all_splits, embedding=local_embeddings)
         return self.vectorstore
 
+    def direct_query(self, context:str, query:str):
+        return self.chain_5.invoke({
+            "context": context,
+            "query": query
+        })
 
     def get_destination(self, query) -> str:
         """
@@ -139,7 +151,18 @@ class Rag():
         Returns:
             the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
         """
-        return self._get_destination.invoke({"query": query})
+        for _ in range(3):
+            dest = self._get_destination.invoke({"query": query})
+            if dest != 'none':
+                return  dest
+        return 'none'
+    
+    def explainRag(self, dest:str, query_obj:BaseModel) -> str:
+        if query_obj is not None:
+            if isinstance(query_obj, KPIRequest) or isinstance(query_obj, LunchRequest):
+                return query_obj.explain_rag()
+        #TODO: handle general destinations 
+        return 'explanation not ye available\n'
     
     def explainableQuery(self, query:str, destination:str=None):
         """
@@ -150,12 +173,25 @@ class Rag():
         return:
             - the response for the query
         """
+        request = None
+        if destination == "KPI query":
+            request:KPIRequest = self._chain_1.invoke({"query": query})
+            answer = 'to implement'
+        elif destination == "food":
+            request:LunchRequest = self.chain_4.invoke({"query": query})
+            answer = get_menu_for(request.day, request.meal == 'dinner')
+            query = f'What is on the menu for {request.day} {request.meal}? Aswer with all the options available.'
+            answer = self.direct_query(answer, query)
+        else:
+            return 'unable to answer the query'
+        explanation = self.explainRag(destination, request)
+        return explanation + answer
         if destination == "KPI query constructor":
             print("Working on it...")
             answered = False
             for i in range(5):
                 try:
-                    answer:KPIRequest = self._chain_1.invoke({"query": query})
+                    
                     answered = True
                 except:
                     continue
