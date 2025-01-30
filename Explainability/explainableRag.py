@@ -3,6 +3,7 @@
 # The original file is located in the main directory of the repository and is called RAG.py.
 # This is supposed to be more readable and easier to understand (since there are comments in the code).
 # It is also supposed to be more modular and easier to use in the future.
+from datetime import datetime
 import os
 import sys
 
@@ -31,6 +32,7 @@ from langchain_ollama import ChatOllama
 # Stuff for document loading
 from langchain_community.document_loaders import UnstructuredXMLLoader
 from example_explainability import slowly_print_load
+from printer import ListPrinter
 
 class Rag():
     def __init__(self, model):
@@ -42,6 +44,9 @@ class Rag():
          - model: the model that is going to be used to generate the responses (e.g. llama3.2)
         """
         self.model = ChatOllama(model=model)
+        today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        self.printer = ListPrinter()
+
 
         prompt_1 = ChatPromptTemplate.from_messages(
             [
@@ -51,7 +56,13 @@ class Rag():
         )
         prompt_2 = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are an expert on bunnies."),
+                ("system", f"""
+                        You are an expert in identifying and analyzing KPI trends. Your task is to understand the query and extract relevant details to construct a structured output. 
+                        - Focus on trends, patterns, or historical analysis of KPIs.
+                        - Today's date is {today}, which should be considered as the default end date unless another specific date is provided.
+                        - The system should intelligently decide on a reasonable start date for trend analysis when the user’s query doesn't explicitly specify a time frame. Assume the start date as the first day of the current month or year, as appropriate.
+                        - The structured output should include the KPI name, machine names, start date, and end date.
+                        """,),
                 ("human", "{query}"),
             ]
         )
@@ -75,16 +86,22 @@ class Rag():
         # chain for the lunch request
         self.chain_4 = prompt_4 | self.model.with_structured_output(LunchRequest)
         # explainable chain (use model KPI expert)
-        self._chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest) 
-        # bunny chain (use only model knowledge + bunny expert)
-        self._chain_2 = prompt_2 | self.model | StrOutputParser()
+        self._chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest)
+        # show off chain (tell user what the model can do)
+        self._chain_2 = prompt_2 | self.model | StrOutputParser() 
         # unexpected chain (tell the user that the model is not able to answer)
         self._chain_3 = prompt_3 | self.model | StrOutputParser()
         # general direct query
         self.chain_5 = prompt_5 | self.model | StrOutputParser()
 
         # Class that is going to be used to route the queries
-        route_system = "Which one of these topic is the human query about?."
+        route_system = "Which one of these choice is the human query about? choose between: \
+KPI request (example: what is the average usage of laser cutting machine),\
+KPI trend (),\
+'email or reports' (example write an email about that),\
+food (examples: what is the menu, what is there for lunch),\
+capability (example: what can you do, what are your capabilities),\
+else if not strictly related to the previous categories."
         route_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", route_system),
@@ -100,11 +117,15 @@ class Rag():
 
         def get_dest(x):
             try:
-                #print(f'dest str = {x}')
+                print(f'dest str = {x}')
                 if "kpi" in x['destination'].lower():
-                    return "KPI query constructor"
+                    return "KPI request"
                 if "food" in x['destination'].lower() or "menu" in x['destination'].lower() or "lunch" in x['destination'].lower() or "dinner" in x['destination'].lower():
                     return "food"
+                if "mail" in x['destination'].lower() or "report" in x['destination'].lower():
+                    return "email or reports"
+                if "capability" in x['destination'].lower() or ("can" in x['destination'].lower() and "do" in x['destination'].lower()) or "capabilities" in x['destination'].lower():
+                    return "capability"
                 else:
                     return "none"
             except:
@@ -159,10 +180,15 @@ class Rag():
     
     def explainRag(self, dest:str, query_obj:BaseModel) -> str:
         if query_obj is not None:
+            # KPI request or food
             if isinstance(query_obj, KPIRequest) or isinstance(query_obj, LunchRequest):
                 return query_obj.explain_rag()
+        if dest == "KPI request":
+            return 'phrase to explain capability...\n'
+        elif dest == "capability":
+            return 'Explaining capabilities...\n'
         #TODO: handle general destinations 
-        return 'explanation not ye available\n'
+        return 'explanation not yet available\n'
     
     def explainableQuery(self, query:str, destination:str=None):
         """
@@ -176,16 +202,20 @@ class Rag():
         request = None
         if destination == "KPI query":
             request:KPIRequest = self._chain_1.invoke({"query": query})
+            self.printer.add_string(self.explainRag(destination, request))
             answer = 'to implement'
         elif destination == "food":
             request:LunchRequest = self.chain_4.invoke({"query": query})
-            answer = get_menu_for(request.day, request.meal == 'dinner')
-            query = f'What is on the menu for {request.day} {request.meal}? Aswer with all the options available.'
+            self.printer.add_string(self.explainRag(destination, request))
+            answer = get_menu_for(request.day)
+            query = f'What is on the menu for {request.day}? Aswer with all the options available.'
             answer = self.direct_query(answer, query)
+        elif destination == "capability":
+            self.printer.add_string(self.explainRag(destination, None))
+            answer = 'I can do a copple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
         else:
             return 'unable to answer the query'
-        explanation = self.explainRag(destination, request)
-        return explanation + answer
+        return answer
         if destination == "KPI query constructor":
             print("Working on it...")
             answered = False

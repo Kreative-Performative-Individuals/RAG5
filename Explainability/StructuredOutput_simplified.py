@@ -8,15 +8,24 @@ from typing_extensions import TypedDict
 from typing import Literal, List
 from typing import Optional
 from langchain_core.pydantic_v1 import BaseModel, Field
+from datetime import datetime
 
 
 class RouteQuery(TypedDict):
     """Route query to destination."""
-    destination: Literal["KPI request","KPI trend", "email or reports", "food", "else"] = Field(
-         description="choose between KPI request which is about the calculation of the KPI,\
-KPI trend which is about the trend of a particular KPI,\
-'email or reports' which is about writing an email or a report about a particular KPI,\
-food which is about meal/lunch/dinner,\
+    destination: Literal[
+         "KPI request",
+         "KPI trend", 
+         "email or reports", 
+         "food",
+         "capability",
+         "else"] = Field(
+         description="choose between: \
+KPI request (example: what is the average usage of laser cutting machine),\
+KPI trend (),\
+'email or reports' (example write an email about that),\
+food (examples: what is the menu, what is there for lunch),\
+capability (example: what can you do, what are your capabilities),\
 else if not strictly related to the previous categories"
 )
 
@@ -65,11 +74,12 @@ Using KPI calculation engine to compute {self.time_aggregation}\n\
 Formulating textual response\n"
     
 class LunchRequest(BaseModel):
-    day: str = Field(description="The day of the week. (mon,tue,wed,thu,fri,sat)")
-    meal: Literal['lunch', 'dinner'] = Field(description="The meal of the day (lunch or dinner). 'lunch' as the default")
+    today = datetime.today().strftime('%A').lower()
     
+    day: str = Field(description=f"The day of the week. (mon,tue,wed,thu,fri,sat), today is ({today})")
+
     def explain_rag(self):
         '''
         return a string explaining the query
         '''
-        return f'Searching for {self.day}\nGetting {self.meal}\n'
+        return f'Downloading the menu...\nSearching for {self.day}...\nGetting lunch informations...\n'
