@@ -27,12 +27,17 @@ class ListPrinter:
     def add_string(self, string:str):
         self.data_list.append(string)
 
+    def add_and_wait(self, string:str):
+        self.data_list.append(string)
+        time.sleep(0.1)
+        self.await_print()
+
     def _print_strings(self):
         while True:
             string:str = self.data_list.pop_or_sleep()
             self.printing = True
             speed = 0.3
-            if len(string) > 100:
+            if len(string) > 200:
                 speed = 0.1
             if string == "DONE":
                 break
@@ -40,11 +45,11 @@ class ListPrinter:
                 if len(word) > 5:
                     for i in range(0, len(word), 5):
                         print(word[i:i+5], end="", flush=True)
-                        time.sleep(0.3)
+                        time.sleep(speed)
                     print(" ", end="", flush=True)
                     continue
                 print(word, end=" ", flush=True)
-                time.sleep(0.3)
+                time.sleep(speed)
             print()
             self.printing = False
     

@@ -49,13 +49,12 @@ class KPIRequest(BaseModel):
 
     """
 
-    name: str = Field(description="The name of the KPI.")    
-    machines: Optional[List[str]] = Field(description="A list of the machines the KPI is for")  
-    operations: Optional[List[str]] = Field(description="A list of possible operations done by the machine. Which are: idle, working, offline and independent")
+    name: str = Field(description="The name of the KPI. (example: energy consumption, temperature, etc.)")    
+    machines: Optional[str] = Field(description="A list of the machines if no machine is specified use the empty list (example: [Laser Machine, Cutting Machine], [Laser machine], etc.)")  
+    operations: Optional[List[str]] = Field(description="A list of possible operations done by the machine. Which are: idle, working, offline and independent. if not specified use [idle, working, offline].)")
     time_aggregation: Literal["mean","min","max","var","std","sum"] = Field(description="The aggregation type of the KPI. If it is not specified, use 'mean' as the default")
     start_date: Optional[str] = Field(description="The start date provided. Write it in the format YYYY-MM-DD HH:MM:SS. If it is not a specific day, try to infer it from the request, else use the first day of the month; if it is not a specific month, please use the first day of the year for the hours minute and seconds if not specified set as 00:00:00")
     end_date: Optional[str] = Field(description="The end date provided. Write it in the format YYYY-MM-DD HH:MM:SS. If it is not a specific day, try to infer it from the request, else use the today date as default; if it is not a specific month, please use the first day of the year for the hours minute and seconds if not specified set as 00:00:00")
-    step: Optional[int] = Field(description="The periodic time step in which the KPI is asked. Translate it in number of days. If it is not specified, use 1 as the default.")
 
     def to_json(self):
            return json.dumps(self,default=lambda o: o.__dict__, sort_keys=False, indent=4)

@@ -51,7 +51,7 @@ class Rag():
 
         prompt_1 = ChatPromptTemplate.from_messages(
             [
-                ("system", "You are an expert on constructing queries with specific structures."),
+                ("system", "You are an expert in identifying and analyzing KPIs. Your task is to understand the query and extract relevant details to construct a structured output. Focus on the KPI name, machine names, and time frame."),
                 ("human", "{query}"),
             ]
         )
@@ -96,13 +96,16 @@ class Rag():
         self.chain_5 = prompt_5 | self.model | StrOutputParser()
 
         # Class that is going to be used to route the queries
-        route_system = "Which one of these choice is the human query about? choose between: \
-KPI request (example: what is the average usage of laser cutting machine),\
-KPI trend (),\
-'email or reports' (example write an email about that),\
-food (examples: what is the menu, what is there for lunch),\
-capability (example: what can you do, what are your capabilities),\
-else if not strictly related to the previous categories."
+        route_system = "Which one of these choice is the human query about? choose between: \n\
+KPI request (example: what is the average usage of laser cutting machine, give me the max cost of X machine from Y, get X of all the machines),\n\
+aplication (example: how do I get a KPI, how is implemented J),\n\
+plot (where can I found the plot of X, plot the average of Y),\n\
+'email or reports' (example write an email about that),\n\
+food (examples: what is the menu, what is there for lunch),\n\
+capability (example: what can you do, what are your capabilities),\n\
+greetings (example: hello, who are you),\n\
+else if not strictly related to the previous categories.\n\
+Tell just the destination of the query."
         route_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", route_system),
@@ -127,6 +130,10 @@ else if not strictly related to the previous categories."
                     return "email or reports"
                 if "capability" in x['destination'].lower() or ("can" in x['destination'].lower() and "do" in x['destination'].lower()) or "capabilities" in x['destination'].lower():
                     return "capability"
+                if "application" in x['destination'].lower() or "find" in x['destination'].lower() or "plot" in x['destination'].lower():
+                    return "application"
+                if "plot" in x['destination'].lower() or "graph" in x['destination'].lower():
+                    return "plot"
                 else:
                     return "none"
             except:
@@ -182,14 +189,18 @@ else if not strictly related to the previous categories."
         return 'none'
     
     def explainRag(self, dest:str, query_obj:BaseModel) -> str:
-        if query_obj is not None:
-            # KPI request or food
-            if isinstance(query_obj, KPIRequest) or isinstance(query_obj, LunchRequest):
-                return query_obj.explain_rag()
         if dest == "KPI request":
-            return 'phrase to explain capability...\n'
+            return query_obj.explain_rag()
+        elif dest == "food":
+            return query_obj.explain_rag()
+        elif dest == "application":
+            return 'Searching documents...\nFormulating answer...\n'
         elif dest == "capability":
             return 'Explaining capabilities...\n'
+        elif dest == "plot":
+            return 'Searching in documentation...\nFormulating answer...\n'
+        elif dest == "email or reports":
+            return 'Understanding context...\nGenerating email or a report...\n'
         #TODO: handle general destinations 
         return 'explanation not yet available\n'
     
@@ -203,8 +214,19 @@ else if not strictly related to the previous categories."
             - the response for the query
         """
         request = None
-        if destination == "KPI query":
-            request:KPIRequest = self._chain_1.invoke({"query": query})
+        if destination == "KPI request":
+            self.printer.add_string("Generating KPI request...")
+            for i in range(3):
+                try:
+                    request = self._chain_1.invoke({"query": query})
+                    break
+                except Exception as e:
+                    if i == 2:
+                        self.printer.add_and_wait("Unable to generate KPI request.")
+                        return "..."
+                    self.printer.add_string("...")
+                    print(e)
+                    continue
             self.printer.add_string(self.explainRag(destination, request))
             answer = 'to implement'
         elif destination == "food":
@@ -220,11 +242,20 @@ else if not strictly related to the previous categories."
         elif destination == "capability":
             self.printer.add_string(self.explainRag(destination, None))
             answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
+        elif destination == "application":
+            self.printer.add_string(self.explainRag(destination, None))
+            answer = 'I need to implement a RAG'
+        elif destination == "plot":
+            self.printer.add_string(self.explainRag(destination, None))
+            answer = 'I need to implement a RAG'
+        elif destination == "email or reports":
+            self.printer.add_string(self.explainRag(destination, None))
+            answer = 'I need to implement a RAG'
+        elif destination == "greetings":
+            answer = 'Hello! I am the explainable chat.\nI am here to help you with your queries.'
         else:
-            answer = 'unable to answer the query'
+            answer = 'I\'m sorry, I can\'t answer that.'
         
         time.sleep(0.1)
-        self.printer.add_string(answer)
-        time.sleep(0.1)
-        self.printer.await_print()
+        self.printer.add_and_wait(answer)
         return answer
