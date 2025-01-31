@@ -21,6 +21,7 @@ class BlockingList (list):
 class ListPrinter:
     def __init__(self, ):
         self.data_list:BlockingList = BlockingList()
+        self.printing = False
         self.start()
 
     def add_string(self, string:str):
@@ -28,13 +29,28 @@ class ListPrinter:
 
     def _print_strings(self):
         while True:
-            string = self.data_list.pop_or_sleep()
+            string:str = self.data_list.pop_or_sleep()
+            self.printing = True
+            speed = 0.3
+            if len(string) > 100:
+                speed = 0.1
             if string == "DONE":
                 break
-            for char in string:
-                print(char, end="")
-                time.sleep(0.1)
+            for word in string.split(" "):
+                if len(word) > 5:
+                    for i in range(0, len(word), 5):
+                        print(word[i:i+5], end="", flush=True)
+                        time.sleep(0.3)
+                    print(" ", end="", flush=True)
+                    continue
+                print(word, end=" ", flush=True)
+                time.sleep(0.3)
             print()
+            self.printing = False
+    
+    def await_print(self):
+        while self.printing:
+            time.sleep(0.1)
     
     def start(self):
         thread = threading.Thread(target=self._print_strings)

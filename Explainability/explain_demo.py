@@ -19,6 +19,7 @@ def interactive_chat():
         user_input = input("Enter your query (or type 'exit' to quit): ")
         if user_input.lower() == 'exit':
             print("Exiting the chat.")
+            rag.close()
             break
         if user_input == "":
             print("Error: The input is empty.")
@@ -41,7 +42,6 @@ def interactive_chat():
             print("Error: The model is broken.")
         # If the destination is found, generate the response
         response = rag.explainableQuery(user_input, destination)
-        slowly_print(f"Response:{response}")
         print("\n")
 
 if __name__ == "__main__":

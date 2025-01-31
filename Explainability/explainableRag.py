@@ -3,9 +3,10 @@
 # The original file is located in the main directory of the repository and is called RAG.py.
 # This is supposed to be more readable and easier to understand (since there are comments in the code).
 # It is also supposed to be more modular and easier to use in the future.
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import sys
+import time
 
 from pydantic import BaseModel
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -139,6 +140,8 @@ else if not strictly related to the previous categories."
             lambda x: get_dest(x),
         )
 
+    def close(self):
+        self.printer.stop()
 
     # This function should be changed when we have the possibility to access to the knowledge base
     def load_documents(self):
@@ -206,53 +209,22 @@ else if not strictly related to the previous categories."
             answer = 'to implement'
         elif destination == "food":
             request:LunchRequest = self.chain_4.invoke({"query": query})
+            if request.day.lower() == "today":
+                request.day = datetime.today().strftime('%A').lower()
+            elif request.day.lower() == "tomorrow":
+                request.day = (datetime.today() + timedelta(days=1)).strftime('%A').lower()
             self.printer.add_string(self.explainRag(destination, request))
-            answer = get_menu_for(request.day)
+            answer = get_menu_for(request.day.lower())
             query = f'What is on the menu for {request.day}? Aswer with all the options available.'
             answer = self.direct_query(answer, query)
         elif destination == "capability":
             self.printer.add_string(self.explainRag(destination, None))
-            answer = 'I can do a copple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
+            answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
         else:
-            return 'unable to answer the query'
+            answer = 'unable to answer the query'
+        
+        time.sleep(0.1)
+        self.printer.add_string(answer)
+        time.sleep(0.1)
+        self.printer.await_print()
         return answer
-        if destination == "KPI query constructor":
-            print("Working on it...")
-            answered = False
-            for i in range(5):
-                try:
-                    
-                    answered = True
-                except:
-                    continue
-                if answered:
-                    break
-            if not answered:
-                return "Error: The model is broken."
-            answer = f"""Retrieving data of {answer.machine_names[0]}\n\
-Selecting dates from {answer.start_date} to {answer.end_date}\n\
-Using KPI calculation engine to compute {answer.aggregation}\n\
-Formulating textual response"""
-            slowly_print_load(answer)
-            return "Example answer, from rag"
-        elif destination == "Other expert":
-            return "Sorry, I am not able to explain this query"
-        elif destination == "food":
-            print("Working on it...")
-            answered = False
-            for i in range(5):
-                try:
-                    answer:LunchRequest = self.chain_4.invoke({"query": query})
-                    answered = True
-                except:
-                    continue
-                if answered:
-                    break
-            if not answered:
-                return "Error: The model is broken."
-            print(f'Getting menu for {answer.day} {answer.meal}')
-            answer = get_menu_for(answer.day, answer.meal == 'dinner')
-            return answer
-
-        #print("Destination not found, general routing, destination:", destination)
-        return "Sorry, I am not able to answer this query"
