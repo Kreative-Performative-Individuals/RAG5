@@ -6,3 +6,4 @@ venv/
 */venv/
 web_searches/*.pdf
 vectorstore/
+pdf_files/
