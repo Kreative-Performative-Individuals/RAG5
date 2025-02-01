@@ -246,7 +246,7 @@ Tell just the destination of the query."
             answer = self.direct_query(answer, query)
         elif destination == "capability":
             explanation = self.explainRag(destination, None)
-            answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
+            answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.\n I can answer queries about the general system\n'
         elif destination == "application":
             explanation = self.explainRag(destination, None)
             answer = 'I need to implement a RAG'
