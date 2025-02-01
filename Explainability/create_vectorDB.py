@@ -1,3 +1,4 @@
+import pickle
 import bs4
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -8,7 +9,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 
 #### INDEXING ####
-
+'''
 # Load Documents
 loader = WebBaseLoader(
     web_paths=("https://github.com/davide-marchi/clinical-data-encoding/blob/main/README.md",),
@@ -22,13 +23,18 @@ docs = loader.load()
 print('docs loaded')
 
 # Split
+#CharacterTextSplitter for just text
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 splits = text_splitter.split_documents(docs)
 print('splits created')
 
 # Embed
 vectorstore = Chroma.from_documents(documents=splits, 
-                                    embedding=OllamaEmbeddings(model="llama3.1:8b"))
+                                    embedding=OllamaEmbeddings(model="llama3.1:8b"),
+                                    persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore")
+'''
+vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
+                     embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
 
 retriever = vectorstore.as_retriever()
 print('retriever created')
