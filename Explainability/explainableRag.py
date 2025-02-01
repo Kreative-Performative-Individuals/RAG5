@@ -19,6 +19,7 @@ from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from StructuredOutput_simplified import KPIRequest, LunchRequest, RouteQuery ## line that gives error
+from StructuredOutput_simplified import ApiRequestCallTopic1, ApiRequestCallTopic8
 from langchain_core.pydantic_v1 import Field
 from operator import itemgetter
 from typing import Literal
@@ -189,20 +190,22 @@ Tell just the destination of the query."
         return 'none'
     
     def explainRag(self, dest:str, query_obj:BaseModel) -> str:
+        explanation = 'explanation not yet available\n'
         if dest == "KPI request":
-            return query_obj.explain_rag()
+            explanation =  query_obj.explain_rag()
         elif dest == "food":
-            return query_obj.explain_rag()
+            explanation =  query_obj.explain_rag()
         elif dest == "application":
-            return 'Searching documents...\nFormulating answer...\n'
+            explanation =  'Searching documents...\nFormulating answer...\n'
         elif dest == "capability":
-            return 'Explaining capabilities...\n'
+            explanation = 'Explaining capabilities...\n'
         elif dest == "plot":
-            return 'Searching in documentation...\nFormulating answer...\n'
+            explanation = 'Searching in documentation...\nFormulating answer...\n'
         elif dest == "email or reports":
-            return 'Understanding context...\nGenerating email or a report...\n'
+            explanation = 'Understanding context...\nGenerating email or a report...\n'
         #TODO: handle general destinations 
-        return 'explanation not yet available\n'
+        self.printer.add_string(explanation)
+        return explanation
     
     def explainableQuery(self, query:str, destination:str=None):
         """
@@ -227,29 +230,31 @@ Tell just the destination of the query."
                     self.printer.add_string("...")
                     print(e)
                     continue
-            self.printer.add_string(self.explainRag(destination, request))
-            answer = 'to implement'
+            explanation = self.explainRag(destination, request)
+            api_response1, request = ApiRequestCallTopic1(request)
+            api_response8 = ApiRequestCallTopic8(request)
+            answer = self.direct_query(f"Answer the user query, be concise. The answer is {(api_response8*10):.2f} {api_response1.split("unit of measure: ")[1].split()[0]}. Format it as an answer", query)
         elif destination == "food":
             request:LunchRequest = self.chain_4.invoke({"query": query})
             if request.day.lower() == "today":
                 request.day = datetime.today().strftime('%A').lower()
             elif request.day.lower() == "tomorrow":
                 request.day = (datetime.today() + timedelta(days=1)).strftime('%A').lower()
-            self.printer.add_string(self.explainRag(destination, request))
+            explanation = self.explainRag(destination, request)
             answer = get_menu_for(request.day.lower())
             query = f'What is on the menu for {request.day}? Aswer with all the options available.'
             answer = self.direct_query(answer, query)
         elif destination == "capability":
-            self.printer.add_string(self.explainRag(destination, None))
+            explanation = self.explainRag(destination, None)
             answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.'
         elif destination == "application":
-            self.printer.add_string(self.explainRag(destination, None))
+            explanation = self.explainRag(destination, None)
             answer = 'I need to implement a RAG'
         elif destination == "plot":
-            self.printer.add_string(self.explainRag(destination, None))
+            explanation = self.explainRag(destination, None)
             answer = 'I need to implement a RAG'
         elif destination == "email or reports":
-            self.printer.add_string(self.explainRag(destination, None))
+            explanatino = self.explainRag(destination, None)
             answer = 'I need to implement a RAG'
         elif destination == "greetings":
             answer = 'Hello! I am the explainable chat.\nI am here to help you with your queries.'

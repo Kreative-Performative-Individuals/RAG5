@@ -14,7 +14,7 @@ def get_page_string(url: str) -> str:
     Returns:
         the page content as a string
     '''
-    page = urllib.request.urlopen(url)
+    page = urllib.request.urlopen(url, timeout=3)
     string_page = page.read().decode('utf-8')
     page.close()
     return string_page
@@ -38,7 +38,7 @@ def get_menu_pdf(page_url: str) -> bytes:
     Returns:
         the pdf file downloaded or None if the pdf is not found
     '''
-    pdf = urllib.request.urlopen(page_url)
+    pdf = urllib.request.urlopen(page_url, timeout=3)
     pdf_file = pdf.read()
     pdf.close()
     return pdf_file    

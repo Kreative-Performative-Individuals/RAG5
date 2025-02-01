@@ -22,23 +22,24 @@ class ListPrinter:
     def __init__(self, ):
         self.data_list:BlockingList = BlockingList()
         self.printing = False
+        self.speed = 0.4
         self.start()
 
     def add_string(self, string:str):
         self.data_list.append(string)
 
     def add_and_wait(self, string:str):
+        self.speed = 0.2
         self.data_list.append(string)
         time.sleep(0.1)
         self.await_print()
+        self.speed = 0.4
 
     def _print_strings(self):
         while True:
             string:str = self.data_list.pop_or_sleep()
+            speed = self.speed
             self.printing = True
-            speed = 0.3
-            if len(string) > 200:
-                speed = 0.1
             if string == "DONE":
                 break
             for word in string.split(" "):
