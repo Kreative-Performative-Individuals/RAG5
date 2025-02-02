@@ -26,11 +26,7 @@ prompt = PromptTemplate(
     )
 )
 # LLM
-llm = ChatOllama(model="llama3.1:8b", temperature=0)
-
-# Post-processing
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+llm = ChatOllama(model="llama3.1:8b")
 
 print('creating chain')
 # Chain
@@ -50,7 +46,7 @@ print('chain created')
 
 # Invoke the chain
 start = time.time()
-response = rag_chain.invoke("What is a metal cutting machine?")
+response = rag_chain.invoke("What are the system requirements?")
 end = time.time()
 print(f"Time elapsed: {end - start}")
 print(response)

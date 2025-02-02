@@ -81,11 +81,11 @@ def int_from_day(day:str) -> int:
         The integer value of the day.
     '''
     if len(day) == 1:
-        return {'m': 0, 't': 1, 'w': 2, 't': 3, 'f': 4, 's': 5}[day]
+        return {'m': 0, 't': 1, 'w': 2, 't': 3, 'f': 4, 's': 5, 's': 6}[day]
     elif len(day) == 3:
-        return {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5}[day]
+        return {'mon': 0, 'tue': 1, 'wed': 2, 'thu': 3, 'fri': 4, 'sat': 5, 'sun': 6}[day]
     else:
-        return {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5}[day]
+        return {'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3, 'friday': 4, 'saturday': 5, 'sunday': 6}[day]
 
 def day_from_int(day:int) -> str:
     '''
@@ -97,7 +97,7 @@ def day_from_int(day:int) -> str:
     Returns:
         The day string. (mon,tue,wed,thu,fri,sat)
     '''
-    return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day]
+    return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][day]
 
 def get_text_from_pdf(pdf_path: str, output_txt: str = None, dpi: int = 300, lang: str = "eng") -> str:
     """

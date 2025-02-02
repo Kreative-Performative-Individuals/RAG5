@@ -76,7 +76,7 @@ class LunchRequest(BaseModel):
     today = datetime.today().strftime('%A').lower()
     
     #day: str = Field(description=f"The day of the week. (mon,tue,wed,thu,fri,sat), today is ({today})")
-    day: Literal["mon","tue","wed","thu","fri","sat"] = Field(description=f"The day of the week. (mon,tue,wed,thu,fri,sat), today is ({today})")
+    day: Literal["mon","tue","wed","thu","fri","sat", "sun"] = Field(description=f"The day of the week (lowercased). (mon,tue,wed,thu,fri,sat, sun), today is ({today.lower()})")
 
     def explain_rag(self):
         '''
