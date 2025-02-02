@@ -13,9 +13,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from web_searches.smensiamo import get_menu_for
 sys.path.append(os.path.abspath(os.path.join('..')))
 
-from langchain_community.document_loaders import WebBaseLoader, TextLoader, UnstructuredXMLLoader
+from langchain_community.document_loaders import UnstructuredXMLLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain_ollama import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from StructuredOutput_simplified import KPIRequest, LunchRequest, RouteQuery ## line that gives error
@@ -27,7 +27,7 @@ from typing_extensions import TypedDict
 
 # Stuff for the routing
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import RunnableLambda, RunnablePassthrough
 from langchain_ollama import ChatOllama
 
@@ -48,6 +48,12 @@ class Rag():
         self.model = ChatOllama(model=model)
         today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         self.printer = ListPrinter()
+        vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
+                     embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
+
+        self.retriever = vectorstore.as_retriever()
+        self.past_answer = ''
+        self.past_query = ''
 
 
         prompt_1 = ChatPromptTemplate.from_messages(
@@ -58,13 +64,9 @@ class Rag():
         )
         prompt_2 = ChatPromptTemplate.from_messages(
             [
-                ("system", f"""
-                        You are an expert in identifying and analyzing KPI trends. Your task is to understand the query and extract relevant details to construct a structured output. 
-                        - Focus on trends, patterns, or historical analysis of KPIs.
-                        - Today's date is {today}, which should be considered as the default end date unless another specific date is provided.
-                        - The system should intelligently decide on a reasonable start date for trend analysis when the user’s query doesn't explicitly specify a time frame. Assume the start date as the first day of the current month or year, as appropriate.
-                        - The structured output should include the KPI name, machine names, start date, and end date.
-                        """,),
+                ("system", f"""You are an ai assistant asked to generate an email or a report based on the following conversation""",),
+                ("human", "{past_query}"),
+                ("ai", "{past_answer}"),
                 ("human", "{query}"),
             ]
         )
@@ -84,31 +86,43 @@ class Rag():
                 ("human", "{query}")
             ]
         )
+        prompt_6 = ChatPromptTemplate.from_messages(
+            [
+                ("system", "You are a knowledgeable AI assistant. You are asked to translate the last answer in another language."),
+                ("human", "{past_query}"),
+                ("ai", "{past_answer}"),
+                ("human", "{query}")
+            ]
+        )
 
         # chain for the lunch request
         self.chain_4 = prompt_4 | self.model.with_structured_output(LunchRequest)
         # explainable chain (use model KPI expert)
         self._chain_1 = prompt_1 | self.model.with_structured_output(KPIRequest)
-        # show off chain (tell user what the model can do)
+        # mail/report chain (use model mail/report and the past conversation)
         self._chain_2 = prompt_2 | self.model | StrOutputParser() 
         # unexpected chain (tell the user that the model is not able to answer)
         self._chain_3 = prompt_3 | self.model | StrOutputParser()
         # general direct query
         self.chain_5 = prompt_5 | self.model | StrOutputParser()
+        # translation chain
+        self.chain_6 = prompt_6 | self.model | StrOutputParser()
 
         # Class that is going to be used to route the queries
         route_system = "Which one of these choice is the human query about? choose between: \n\
 KPI request (example: what is the average usage of laser cutting machine, give me the max cost of X machine from Y, get X of all the machines),\n\
-aplication (example: how do I get a KPI, how is implemented J),\n\
+aplication (example: how do I get a KPI, what are the system requirements, what is a x machine, what is a finantial KPI, ai featues...),\n\
 plot (where can I found the plot of X, plot the average of Y),\n\
 'email or reports' (example write an email about that),\n\
+translation (example: translate the last answer),\n\
 food (examples: what is the menu, what is there for lunch),\n\
-capability (example: what can you do, what are your capabilities),\n\
+capability (if qwestion is: what can you do),\n\
 greetings (example: hello, who are you),\n\
 else if not strictly related to the previous categories.\n\
 Tell just the destination of the query."
         route_prompt = ChatPromptTemplate.from_messages(
             [
+                ("system", 'You are an AI assistant inside a web application for industry 5.0 that uses various AI technologies. The app mainly allow the user to keep track of important KPI, machine usage etc. You are asked to route the query to the correct topic.'),
                 ("system", route_system),
                 ("human", "{query}"),
             ]
@@ -131,10 +145,12 @@ Tell just the destination of the query."
                     return "email or reports"
                 if "capability" in x['destination'].lower() or ("can" in x['destination'].lower() and "do" in x['destination'].lower()) or "capabilities" in x['destination'].lower():
                     return "capability"
-                if "application" in x['destination'].lower() or "find" in x['destination'].lower() or "plot" in x['destination'].lower():
+                if "application" in x['destination'].lower() or "find" in x['destination'].lower():
                     return "application"
                 if "plot" in x['destination'].lower() or "graph" in x['destination'].lower():
                     return "plot"
+                if "transl" in x['destination'].lower() or "tradu" in x['destination'].lower():
+                    return "translation"
                 else:
                     return "none"
             except:
@@ -195,14 +211,14 @@ Tell just the destination of the query."
             explanation =  query_obj.explain_rag()
         elif dest == "food":
             explanation =  query_obj.explain_rag()
-        elif dest == "application":
-            explanation =  'Searching documents...\nFormulating answer...\n'
         elif dest == "capability":
             explanation = 'Explaining capabilities...\n'
-        elif dest == "plot":
-            explanation = 'Searching in documentation...\nFormulating answer...\n'
+        elif dest == "plot" or dest == "application":
+            explanation = 'Retrieving Documents...\nSearching in documentation...\nFormulating answer...\n'
         elif dest == "email or reports":
-            explanation = 'Understanding context...\nGenerating email or a report...\n'
+            explanation = 'Understanding context...\nGenerating email or report...\nFormulating answer...\n'
+        elif dest == "translation":
+            explanation = 'Analyzing past answer...\nTranslating conversation...\nFormulating answer...\n'
         #TODO: handle general destinations 
         self.printer.add_string(explanation)
         return explanation
@@ -246,21 +262,54 @@ Tell just the destination of the query."
             answer = self.direct_query(answer, query)
         elif destination == "capability":
             explanation = self.explainRag(destination, None)
-            answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.\n I can answer queries about the general system\n'
+            answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.\n- I can answer queries about the general system\n'
         elif destination == "application":
             explanation = self.explainRag(destination, None)
-            answer = 'I need to implement a RAG'
+            answer = self.knowledge_based_query(query)
         elif destination == "plot":
             explanation = self.explainRag(destination, None)
             answer = 'I need to implement a RAG'
         elif destination == "email or reports":
-            explanatino = self.explainRag(destination, None)
-            answer = 'I need to implement a RAG'
+            explanation = self.explainRag(destination, None)
+            answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
         elif destination == "greetings":
             answer = 'Hello! I am the explainable chat.\nI am here to help you with your queries.'
+        elif destination == "translation":
+            explanation = self.explainRag(destination, None)
+            answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
         else:
             answer = 'I\'m sorry, I can\'t answer that.'
         
         time.sleep(0.1)
         self.printer.add_and_wait(answer)
+        self.past_answer = answer
+        self.past_query = query
         return answer
+    
+    def knowledge_based_query(self, query:str) -> str:
+        """
+        Generate the response for the query
+        args:
+         - query: the query that is going to be used to generate the response
+        return:
+            - the response for the query based on documents available to the user
+        """
+        prompt = PromptTemplate(
+            input_variables=["context", "question"],
+            template=(
+                "You are a knowledgeable AI assistant. Use the provided context to answer the question.\n\n"
+                "Context:\n{context}\n\n"
+                "Question: {question}\n\n"
+                "Answer:"
+            )
+        )
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+        rag_chain = (
+            {"context": self.retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt
+            | self.model
+            | StrOutputParser()
+        )
+        "What are the system requirements?"
+        return rag_chain.invoke(query.capitalize())
