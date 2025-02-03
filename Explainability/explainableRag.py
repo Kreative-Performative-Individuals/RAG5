@@ -54,6 +54,7 @@ class Rag():
         self.retriever = vectorstore.as_retriever()
         self.past_answer = ''
         self.past_query = ''
+        self.past_conversation = []
 
 
         prompt_1 = ChatPromptTemplate.from_messages(
@@ -152,7 +153,7 @@ Tell just the destination of the query."
                 if "transl" in x['destination'].lower() or "tradu" in x['destination'].lower():
                     return "translation"
                 else:
-                    return "none"
+                    return "general"
             except:
                 return "none"
             
@@ -219,6 +220,9 @@ Tell just the destination of the query."
             explanation = 'Understanding context...\nGenerating email or report...\nFormulating answer...\n'
         elif dest == "translation":
             explanation = 'Analyzing past answer...\nTranslating conversation...\nFormulating answer...\n'
+        elif dest == "general":
+            explanation = 'Analyzing query...\nFormulating answer...\n'
+
         #TODO: handle general destinations 
         self.printer.add_string(explanation)
         return explanation
@@ -277,6 +281,9 @@ Tell just the destination of the query."
         elif destination == "translation":
             explanation = self.explainRag(destination, None)
             answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+        elif destination == "general":
+            explanation = self.explainRag(destination, None)
+            answer = self.chat_based_query(query)
         else:
             answer = 'I\'m sorry, I can\'t answer that.'
         
@@ -284,6 +291,8 @@ Tell just the destination of the query."
         self.printer.add_and_wait(answer)
         self.past_answer = answer
         self.past_query = query
+        self.past_conversation.append(query)
+        self.past_conversation.append(answer)
         return answer
     
     def knowledge_based_query(self, query:str) -> str:
@@ -313,3 +322,22 @@ Tell just the destination of the query."
         )
         "What are the system requirements?"
         return rag_chain.invoke(query.capitalize())
+    
+    def chat_based_query(self, query:str) -> str:
+        """
+        Generate the response for the query based on the conversation with the user
+        args:
+         - query: the query that is going to be used to generate the response
+        return:
+            - the response for the query based on the conversation with the user
+        """
+        context_based_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", "You are an AI assistant (a chatbot) inside a web application for industry 5.0 that uses various AI technologies. The app mainly allow the user to keep track of important KPI, machine usage etc..."),
+                ("system", "You are asked to continue the conversation with the user."),
+                *self.past_conversation,
+                ("human", "{query}"),
+            ]
+        )
+        context_based_chain = context_based_prompt | self.model | StrOutputParser()
+        return context_based_chain.invoke({"query": query})
