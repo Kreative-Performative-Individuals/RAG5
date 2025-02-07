@@ -51,7 +51,10 @@ class Rag():
         vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
                      embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
 
-        self.retriever = vectorstore.as_retriever()
+        self.retriever = vectorstore.as_retriever(
+            search_type="mmr",
+            search_kwargs={'k': 7, 'fetch_k': 21}
+        )
         self.past_answer = ''
         self.past_query = ''
         self.past_conversation = []
@@ -111,15 +114,15 @@ class Rag():
 
         # Class that is going to be used to route the queries
         route_system = "Which one of these choice is the human query about? choose between: \n\
-KPI request (example: what is the average usage of laser cutting machine, give me the max cost of X machine from Y, get X of all the machines),\n\
+KPI request (example: average usage of laser cutting machine, give me the max cost of X machine from Y),\n\
 aplication (example: how do I get a KPI, what are the system requirements, what is a x machine, what is a finantial KPI, ai featues...),\n\
 plot (where can I found the plot of X, plot the average of Y),\n\
 'email or reports' (example write an email about that),\n\
 translation (example: translate the last answer),\n\
 food (examples: what is the menu, what is there for lunch),\n\
 capability (if qwestion is: what can you do),\n\
-greetings (example: hello, who are you),\n\
-else if not strictly related to the previous categories.\n\
+greetings (example: hello, who are you,),\n\
+else if not strictly related to the previous categories or you don't know which one is correct.\n\
 Tell just the destination of the query."
         route_prompt = ChatPromptTemplate.from_messages(
             [
@@ -276,8 +279,6 @@ Tell just the destination of the query."
         elif destination == "email or reports":
             explanation = self.explainRag(destination, None)
             answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
-        elif destination == "greetings":
-            answer = 'Hello! I am the explainable chat.\nI am here to help you with your queries.'
         elif destination == "translation":
             explanation = self.explainRag(destination, None)
             answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
@@ -334,6 +335,7 @@ Tell just the destination of the query."
         context_based_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", "You are an AI assistant (a chatbot) inside a web application for industry 5.0 that uses various AI technologies. The app mainly allow the user to keep track of important KPI, machine usage etc..."),
+                ("system", "Your name is FabbriBot from 'fabbrica' and 'robot'"),
                 ("system", "You are asked to continue the conversation with the user."),
                 *self.past_conversation,
                 ("human", "{query}"),

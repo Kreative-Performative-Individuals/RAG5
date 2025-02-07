@@ -2,7 +2,6 @@ import pickle
 import bs4
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -15,8 +14,8 @@ from langchain_community.document_loaders import PyMuPDFLoader
 file_paths = [
     "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/UG.pdf",
     "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/AI_act.pdf",
-    "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/explainability.pdf",
-    "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/KB_ontology.pdf"
+    "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/Machines.pdf",
+    "/home/d.borghini/Documents/GitHub/RAG5/Explainability/pdf_files/Upgrade.pdf"
 ]
 
 docs = []
@@ -25,7 +24,7 @@ for file_path in file_paths:
     docs.extend(loader.load())
     print(f'docs loaded from {file_path}')
 #CharacterTextSplitter for just text
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=400)
 splits = text_splitter.split_documents(docs)
 print('splits created')
 

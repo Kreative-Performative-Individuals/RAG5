@@ -10,7 +10,11 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
                      embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
 
-retriever = vectorstore.as_retriever()
+retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={'k': 7, 'fetch_k': 21}
+)
+
 print('retriever created')
 
 #### RETRIEVAL and GENERATION ####
@@ -44,6 +48,16 @@ rag_chain = (
 
 print('chain created')
 
+
+# Retrieve and generate answer
+#question = "What are the system requirements?"
+#question = "What is mensa martiri menu retrieval?"
+#question = "What was added in the last update?"
+#question = " Tell me something about metal cutting machine?"
+question = "what is the risk level of the application according to the Ai act?"
+print(question + '\n')
+print(format_docs(retriever.invoke(question)))
+exit()
 # Invoke the chain
 start = time.time()
 response = rag_chain.invoke("What are the system requirements?")
