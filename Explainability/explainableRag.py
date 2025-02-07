@@ -278,8 +278,8 @@ Tell just the destination of the query."
             answer = 'I need to implement a RAG'
         elif destination == "email or reports":
             explanation = self.explainRag(destination, None)
-            #answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
-            answer = self.chat_based_query(query)
+            answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            #answer = self.chat_based_query(query)
         elif destination == "translation":
             explanation = self.explainRag(destination, None)
             answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
