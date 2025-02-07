@@ -120,7 +120,7 @@ plot (where can I found the plot of X, plot the average of Y),\n\
 'email or reports' (example write an email about that),\n\
 translation (example: translate the last answer),\n\
 food (examples: what is the menu, what is there for lunch),\n\
-capability (if qwestion is: what can you do),\n\
+capability (pick this only if question is very similar to: what can you do),\n\
 greetings (example: hello, who are you,),\n\
 else if not strictly related to the previous categories or you don't know which one is correct.\n\
 Tell just the destination of the query."
@@ -278,7 +278,8 @@ Tell just the destination of the query."
             answer = 'I need to implement a RAG'
         elif destination == "email or reports":
             explanation = self.explainRag(destination, None)
-            answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            #answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            answer = self.chat_based_query(query)
         elif destination == "translation":
             explanation = self.explainRag(destination, None)
             answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
@@ -307,7 +308,7 @@ Tell just the destination of the query."
         prompt = PromptTemplate(
             input_variables=["context", "question"],
             template=(
-                "You are a knowledgeable AI assistant. Use the provided context to answer the question.\n\n"
+                "You are a knowledgeable AI assistant. Use the provided context to answer the question. (be short)\n\n"
                 "Context:\n{context}\n\n"
                 "Question: {question}\n\n"
                 "Answer:"
