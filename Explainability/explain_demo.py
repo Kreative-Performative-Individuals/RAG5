@@ -16,9 +16,10 @@ rag = Rag(model="llama3.1:8b")
 def interactive_chat():
     while True:
         # Read the user input
-        user_input = input("Enter your query (or type 'exit' to quit): ")
+        user_input = input("\033[94mEnter your query (or type 'exit' to quit): \033[0m")
+        print()
         if user_input.lower() == 'exit':
-            print("Exiting the chat.")
+            print("Bye.")
             rag.close()
             break
         if user_input == "":
@@ -26,6 +27,7 @@ def interactive_chat():
             continue
         if user_input == "clear":
             os.system('cls' if os.name == 'nt' else 'clear')
+            rag.reset()
             continue
         destination = "None_str"
         # Try to get the destination 3 times
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Welcome to the Explainable Chat!")
     print("\nUseful prompts to test the model:")
-    print("1) Give me the biweekly mean for the energy consumption KPI in 2023 of Large Capacity Cutting Machine when idle and Small Capacity Cutting Machine when working")
+    print("1) Translate the last message in french.")
     print("2) Get the max of the consumption KPI of the Laser Machine in 2023? ")
     print("3) What is there for dinner on monday?\n")
     interactive_chat()

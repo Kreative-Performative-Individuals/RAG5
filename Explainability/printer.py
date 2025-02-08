@@ -16,24 +16,33 @@ class BlockingList (list):
         with self._cond:
             while not len(self):
                 self._cond.wait()
-            return self.pop()
+            item = super().pop(0)
+            self._cond.notify_all()
+            return item
+    
+    def await_empty(self):
+        with self._cond:
+            while len(self):
+                self._cond.wait()
         
 class ListPrinter:
     def __init__(self, ):
         self.data_list:BlockingList = BlockingList()
         self.printing = False
-        self.speed = 0.4
+        self.speed = 0.2
         self.start()
 
     def add_string(self, string:str):
         self.data_list.append(string)
 
     def add_and_wait(self, string:str):
-        self.speed = 0.2
         self.data_list.append(string)
-        time.sleep(0.1)
         self.await_print()
-        self.speed = 0.4
+
+    def print_chunk(self, chunk:str):
+        self.await_print()
+        print(chunk, end="", flush=True)
+
 
     def _print_strings(self):
         while True:
@@ -45,16 +54,17 @@ class ListPrinter:
             for word in string.split(" "):
                 if len(word) > 5:
                     for i in range(0, len(word), 5):
-                        print(word[i:i+5], end="", flush=True)
+                        print(f"\033[90m{word[i:i+5]}\033[0m", end="", flush=True)
                         time.sleep(speed)
                     print(" ", end="", flush=True)
                     continue
-                print(word, end=" ", flush=True)
+                print(f"\033[90m{word}\033[0m", end=" ", flush=True)
                 time.sleep(speed)
             print()
             self.printing = False
     
     def await_print(self):
+        self.data_list.await_empty()
         while self.printing:
             time.sleep(0.1)
     

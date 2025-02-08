@@ -45,15 +45,15 @@ class Rag():
         args:
          - model: the model that is going to be used to generate the responses (e.g. llama3.2)
         """
-        self.model = ChatOllama(model=model)
-        today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        self.model = ChatOllama(model=model, temperature=0.8)
+        self.today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         self.printer = ListPrinter()
         vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
                      embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
 
         self.retriever = vectorstore.as_retriever(
             search_type="mmr",
-            search_kwargs={'k': 7, 'fetch_k': 21}
+            search_kwargs={'k': 7, 'fetch_k': 19}
         )
         self.past_answer = ''
         self.past_query = ''
@@ -140,7 +140,7 @@ Tell just the destination of the query."
 
         def get_dest(x):
             try:
-                print(f'dest str = {x}')
+                #print(f'dest str = {x}')
                 if "kpi" in x['destination'].lower():
                     return "KPI request"
                 if "food" in x['destination'].lower() or "menu" in x['destination'].lower() or "lunch" in x['destination'].lower() or "dinner" in x['destination'].lower():
@@ -171,29 +171,17 @@ Tell just the destination of the query."
     def close(self):
         self.printer.stop()
 
-    # This function should be changed when we have the possibility to access to the knowledge base
-    def load_documents(self):
-        '''
-        Load the documents from the knowledge base
-        For now we are using a local file that contains the documents
-
-        return:
-            - vectorstore: the vectorstore that contains the documents
-        '''
-        loader = UnstructuredXMLLoader("./kb.owl")
-        self.loader = loader
-        data = self.loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=0)
-        all_splits = text_splitter.split_documents(data)
-        local_embeddings = OllamaEmbeddings(model="nomic-embed-text")
-        self.vectorstore = Chroma.from_documents(documents=all_splits, embedding=local_embeddings)
-        return self.vectorstore
+    def reset(self):
+        self.past_answer = ''
+        self.past_query = ''
+        self.past_conversation = []
 
     def direct_query(self, context:str, query:str):
-        return self.chain_5.invoke({
-            "context": context,
-            "query": query
-        })
+        answer = ''
+        for chunk in self.chain_5.stream({"context": context, "query": query}):
+            answer += chunk
+            self.printer.print_chunk(chunk=chunk)
+        return answer
 
     def get_destination(self, query) -> str:
         """
@@ -203,6 +191,7 @@ Tell just the destination of the query."
         Returns:
             the destination of the query (e.g. KPI Query Constructor, Bunny Expert)
         """
+        self.printer.add_string("Understanding subject of the message...")
         for _ in range(3):
             dest = self._get_destination.invoke({"query": query})
             if dest != 'none':
@@ -225,8 +214,6 @@ Tell just the destination of the query."
             explanation = 'Analyzing past answer...\nTranslating conversation...\nFormulating answer...\n'
         elif dest == "general":
             explanation = 'Analyzing query...\nFormulating answer...\n'
-
-        #TODO: handle general destinations 
         self.printer.add_string(explanation)
         return explanation
     
@@ -240,6 +227,7 @@ Tell just the destination of the query."
             - the response for the query
         """
         request = None
+        answer = ''
         if destination == "KPI request":
             self.printer.add_string("Generating KPI request...")
             for i in range(3):
@@ -265,11 +253,12 @@ Tell just the destination of the query."
                 request.day = (datetime.today() + timedelta(days=1)).strftime('%A').lower()
             explanation = self.explainRag(destination, request)
             answer = get_menu_for(request.day.lower())
-            query = f'What is on the menu for {request.day}? Aswer with all the options available.'
+            query = f'What is on the menu for {request.day}? Aswer with all the options available. (Be short but use emoji)'
             answer = self.direct_query(answer, query)
         elif destination == "capability":
             explanation = self.explainRag(destination, None)
             answer = 'I can do a coupple of things:\n- I can answer queries about KPIs of the machines\n- I can tell you about mensa\'s menu\n- I can write emails/reports.\n- I can answer queries about the general system\n'
+            self.printer.add_and_wait(answer)
         elif destination == "application":
             explanation = self.explainRag(destination, None)
             answer = self.knowledge_based_query(query)
@@ -278,23 +267,25 @@ Tell just the destination of the query."
             answer = 'I need to implement a RAG'
         elif destination == "email or reports":
             explanation = self.explainRag(destination, None)
-            answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
-            #answer = self.chat_based_query(query)
+            #answer = self._chain_2.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            answer = self.chat_based_query(query)
         elif destination == "translation":
             explanation = self.explainRag(destination, None)
-            answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            #answer = self.chain_6.invoke({"query": query, "past_query": self.past_query, "past_answer": self.past_answer})
+            for chunk in self.chain_6.stream({"query": query, "past_query": self.past_query, "past_answer": self.past_answer}):
+                #self.printer.add_and_wait(chunk)
+                answer += chunk
+                self.printer.print_chunk(chunk=chunk)
         elif destination == "general":
             explanation = self.explainRag(destination, None)
             answer = self.chat_based_query(query)
         else:
             answer = 'I\'m sorry, I can\'t answer that.'
         
-        time.sleep(0.1)
-        self.printer.add_and_wait(answer)
         self.past_answer = answer
         self.past_query = query
-        self.past_conversation.append(query)
-        self.past_conversation.append(answer)
+        self.past_conversation.append(("human", query))
+        self.past_conversation.append(("ai", answer))
         return answer
     
     def knowledge_based_query(self, query:str) -> str:
@@ -316,14 +307,24 @@ Tell just the destination of the query."
         )
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
+        
+        # Retrieve documents separately
+        retrieved_docs = self.retriever.invoke(query)
+        context = format_docs(retrieved_docs)
+
         rag_chain = (
-            {"context": self.retriever | format_docs, "question": RunnablePassthrough()}
+            {"context": lambda _:context, "question": RunnablePassthrough()}  # Use the retrieved context
             | prompt
             | self.model
             | StrOutputParser()
         )
+
         "What are the system requirements?"
-        return rag_chain.invoke(query.capitalize())
+        answer = ''
+        for chunk in rag_chain.stream({"question": query.capitalize()}):
+            answer += chunk
+            self.printer.print_chunk(chunk=chunk)
+        return answer
     
     def chat_based_query(self, query:str) -> str:
         """
@@ -336,11 +337,15 @@ Tell just the destination of the query."
         context_based_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", "You are an AI assistant (a chatbot) inside a web application for industry 5.0 that uses various AI technologies. The app mainly allow the user to keep track of important KPI, machine usage etc..."),
-                ("system", "Your name is FabbriBot from 'fabbrica' and 'robot'"),
-                ("system", "You are asked to continue the conversation with the user."),
+                ("system", f"Your name is FabbriBot from 'fabbrica' and 'robot' and today is {self.today}"),
+                ("system", "You are asked to continue the conversation with the user. Answer to the last message. (don't be too long)"),
                 *self.past_conversation,
                 ("human", "{query}"),
             ]
         )
         context_based_chain = context_based_prompt | self.model | StrOutputParser()
-        return context_based_chain.invoke({"query": query})
+        answer = ''
+        for chunk in context_based_chain.stream({"query": query}):
+            answer += chunk
+            self.printer.print_chunk(chunk=chunk)
+        return answer

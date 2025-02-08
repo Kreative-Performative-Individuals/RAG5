@@ -15,17 +15,22 @@ class RouteQuery(TypedDict):
     """Route query to destination."""
     destination: Literal[
          "KPI request",
-         "KPI trend", 
+         "applicatoin",
          "email or reports", 
+         'translation',
          "food",
          "capability",
+         "greetings",
          "else"] = Field(
+             default="else",
          description="choose between: \
 KPI request (example: what is the average usage of laser cutting machine),\
-KPI trend (),\
+application (example: what was added in the last update),\
 'email or reports' (example write an email about that),\
+translation (example: translate this for me),\
 food (examples: what is the menu, what is there for lunch),\
-capability (example: what can you do, what are your capabilities),\
+capability (example: what can you do),\
+greetings (example: hello, hi, good morning),\
 else if not strictly related to the previous categories"
 )
 

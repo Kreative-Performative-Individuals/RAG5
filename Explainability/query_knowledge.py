@@ -51,10 +51,10 @@ print('chain created')
 
 # Retrieve and generate answer
 #question = "What are the system requirements?"
-#question = "What is mensa martiri menu retrieval?"
+question = "What is Proof of Concept: Mensa Martiri Menu Retrieva?"
 #question = "What was added in the last update?"
 #question = " Tell me something about metal cutting machine?"
-question = "what is the risk level of the application according to the Ai act?"
+#question = "what is the risk level of the application according to the Ai act?"
 print(question + '\n')
 print(format_docs(retriever.invoke(question)))
 exit()
