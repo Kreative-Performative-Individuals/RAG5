@@ -45,8 +45,7 @@ class Rag():
         args:
          - model: the model that is going to be used to generate the responses (e.g. llama3.2)
         """
-        self.model = ChatOllama(model=model, temperature=0.8)
-        self.today = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        self.model = ChatOllama(model=model, temperature=0.6)
         self.printer = ListPrinter()
         vectorstore = Chroma(persist_directory="/home/d.borghini/Documents/GitHub/RAG5/Explainability/vectorstore",
                      embedding_function=OllamaEmbeddings(model="llama3.1:8b"))
@@ -337,7 +336,7 @@ Tell just the destination of the query."
         context_based_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", "You are an AI assistant (a chatbot) inside a web application for industry 5.0 that uses various AI technologies. The app mainly allow the user to keep track of important KPI, machine usage etc..."),
-                ("system", f"Your name is FabbriBot from 'fabbrica' and 'robot' and today is {self.today}"),
+                ("system", f"Your name is FabbriBot from 'fabbrica' and 'robot' and today is {datetime.today().strftime('%Y-%m-%d %H:%M:%S')} ({datetime.today().strftime('%A').lower()})"),
                 ("system", "You are asked to continue the conversation with the user. Answer to the last message. (don't be too long)"),
                 *self.past_conversation,
                 ("human", "{query}"),

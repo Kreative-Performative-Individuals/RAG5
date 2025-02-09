@@ -43,14 +43,17 @@ def interactive_chat():
         if destination == "None_str":
             print("Error: The model is broken.")
         # If the destination is found, generate the response
-        response = rag.explainableQuery(user_input, destination)
-        print("\n")
-
+        try:
+            response = rag.explainableQuery(user_input, destination)
+            print("\n")
+        except:
+            print("An error occurred, sorry, try again.\n")
+            continue
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
     print("Welcome to the Explainable Chat!")
     print("\nUseful prompts to test the model:")
     print("1) Translate the last message in french.")
     print("2) Get the max of the consumption KPI of the Laser Machine in 2023? ")
-    print("3) What is there for dinner on monday?\n")
+    print("3) What is there for lunch on monday?\n")
     interactive_chat()
