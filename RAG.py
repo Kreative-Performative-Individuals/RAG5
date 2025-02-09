@@ -378,8 +378,10 @@ class Rag():
                 expl = object.explain_rag()
             elif isinstance(object,KPITrend):
                 expl = object.explain_rag()
-        elif 'e-mail' in dest or 'report' in dest:
+        elif 'e-mail' in dest or 'report' in dest or 'email' in dest:
             expl = "The model is generating an email/report\n"
+        else:
+            expl = "The model is answering based on its knowledge\n"
         return expl + "***"
 
     # Function for follow-up discussions
